@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login Admin - CinePainel</title>
+<title>Login Admin - Filmes Hub</title>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <style>
   body {
     background: #121212;
     color: #fff;
-    font-family: Arial;
+    font-family: Arial, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -19,7 +19,7 @@
   .box {
     background: #1e1e1e;
     padding: 25px;
-    border-radius: 10px;
+    border-radius: 12px;
     box-shadow: 0 0 10px #000;
     width: 320px;
     text-align: center;
@@ -30,6 +30,7 @@
     padding: 10px;
     border: none;
     border-radius: 5px;
+    font-size: 15px;
   }
   button {
     background: #f1c40f;
@@ -41,7 +42,7 @@
     cursor: pointer;
   }
   button:hover { background: #ffda4f; }
-  #painel { display: none; text-align: center; }
+  #painel { display: none; }
 </style>
 </head>
 <body>
@@ -61,8 +62,8 @@
 </div>
 
 <script>
-const SUPABASE_URL = "https://robypvvfbortngafgmwa.supabase.co"; // coloque o seu URL aqui
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvYnlwdnZmYm9ydG5nYWZnbXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2OTM3NDMsImV4cCI6MjA3NTI2OTc0M30.I-ax6h6xChhM2GtzyUofvUsMj4y9qfyzHBZFPSBP2cw"; // coloque sua chave aqui
+const SUPABASE_URL = "https://robypvvfbortngafgmwa.supabase.co"; // ✅ Seu projeto novo
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvYnlwdnZmYm9ydG5nYWZnbXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2OTM3NDMsImV4cCI6MjA3NTI2OTc0M30.I-ax6h6xChhM2GtzyUofvUsMj4y9qfyzHBZFPSBP2cw";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 document.getElementById("btnLogin").addEventListener("click", async () => {
@@ -70,11 +71,16 @@ document.getElementById("btnLogin").addEventListener("click", async () => {
   const senha = document.getElementById("senha").value.trim();
   const msg = document.getElementById("msg");
 
+  if (!email || !senha) {
+    msg.textContent = "Preencha todos os campos.";
+    return;
+  }
+
   const { data, error } = await supabase
-    .from("adm")
+    .from("Adm")
     .select("*")
-    .eq("email", email)
-    .eq("senha", senha)
+    .eq("Email", email)
+    .eq("Senha", senha)
     .single();
 
   if (error || !data) {
@@ -101,5 +107,6 @@ window.onload = () => {
   if (admin) mostrarPainel(admin);
 };
 </script>
+
 </body>
 </html>
