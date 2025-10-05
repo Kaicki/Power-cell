@@ -1,150 +1,137 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CinePower 🎬</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - CineLogin</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
     body {
-      margin: 0;
       font-family: Arial, sans-serif;
-      background: #000;
+      background: #0d0d0d;
       color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
     }
-    header {
-      background: #111;
-      padding: 15px;
+    .container {
+      background: #1a1a1a;
+      padding: 30px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
       text-align: center;
-      color: #00ff88;
-    }
-    input, button {
-      padding: 10px;
-      margin: 8px;
-      border-radius: 6px;
-      border: none;
-      outline: none;
+      box-shadow: 0 0 15px rgba(255,255,255,0.1);
     }
     input {
-      width: 80%;
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 6px;
     }
     button {
-      background: #00ff88;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    button:hover { background: #00e676; }
-    .filmes {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
-      padding: 20px;
-    }
-    .card {
-      background: #111;
-      padding: 10px;
-      border-radius: 10px;
-      text-align: center;
-    }
-    .card img {
       width: 100%;
-      border-radius: 10px;
+      padding: 10px;
+      background: #e50914;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
     }
-    .center {
-      text-align: center;
-      padding: 40px 20px;
+    button:hover {
+      background: #f6121d;
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>CinePower 🎬</h1>
-  </header>
+  <div class="container">
+    <h2 id="form-title">Entrar</h2>
 
-  <!-- LOGIN -->
-  <section id="login-section" class="center">
-    <h2>Entrar ou Cadastrar</h2>
-    <input type="email" id="email" placeholder="E-mail" required><br>
-    <input type="password" id="senha" placeholder="Senha" required><br>
-    <button onclick="login()">Entrar</button>
-    <button onclick="cadastrar()">Cadastrar</button>
-  </section>
-
-  <!-- CATÁLOGO -->
-  <section id="filmes-section" style="display:none;">
-    <div style="text-align:center; margin-top:10px;">
-      <button onclick="logout()">Sair</button>
+    <div id="auth-forms">
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Senha" required />
+      <button id="login-btn">Entrar</button>
+      <button id="signup-btn" style="background:#444;margin-top:5px;">Criar Conta</button>
     </div>
 
-    <div class="filmes">
-      <div class="card">
-        <img src="https://image.tmdb.org/t/p/w300/8YFL5QQVPy3AgrEQxNYVSgiPEbe.jpg" alt="Deadpool & Wolverine">
-        <p>Deadpool & Wolverine</p>
-      </div>
-      <div class="card">
-        <img src="https://image.tmdb.org/t/p/w300/r9j2FbQ1KnfFM0d0tRZh93hF8pf.jpg" alt="Duna: Parte 2">
-        <p>Duna: Parte 2</p>
-      </div>
-      <div class="card">
-        <img src="https://image.tmdb.org/t/p/w300/qNBAXBIQlnOThrVvA6mA2B5ggV6.jpg" alt="Avatar: O Caminho da Água">
-        <p>Avatar: O Caminho da Água</p>
-      </div>
+    <div id="user-info" class="hidden">
+      <p>Bem-vindo, <span id="user-email"></span></p>
+      <button id="logout-btn">Sair</button>
     </div>
-  </section>
+  </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  <script>
+    const SUPABASE_URL = "https://ufzaejihymezkmqehgfh.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmemFlamloeW1lemttcWVoZ2ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2ODk3NzcsImV4cCI6MjA3NTI2NTc3N30.NaxHwq_Eb9BAhbNvPmgme5YNb4V2dawBB2fEpfXwzdQ";
 
-    const SUPABASE_URL = "https://robypvvfbortngafgmwa.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvYnlwdnZmYm9ydG5nYWZnbXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2OTM3NDMsImV4cCI6MjA3NTI2OTc0M30.I-ax6h6xChhM2GtzyUofvUsMj4y9qfyzHBZFPSBP2cw";
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const loginSection = document.getElementById('login-section');
-    const filmesSection = document.getElementById('filmes-section');
-    const emailInput = document.getElementById('email');
-    const senhaInput = document.getElementById('senha');
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const loginBtn = document.getElementById("login-btn");
+    const signupBtn = document.getElementById("signup-btn");
+    const logoutBtn = document.getElementById("logout-btn");
+    const userInfo = document.getElementById("user-info");
+    const userEmail = document.getElementById("user-email");
+    const authForms = document.getElementById("auth-forms");
 
-    async function verificarSessao() {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) mostrarFilmes();
-      else mostrarLogin();
+    // Login
+    loginBtn.addEventListener("click", async () => {
+      const { error } = await client.auth.signInWithPassword({
+        email: emailInput.value,
+        password: passwordInput.value,
+      });
+      if (error) {
+        alert("Erro ao entrar: " + error.message);
+      } else {
+        checkUser();
+      }
+    });
+
+    // Cadastro
+    signupBtn.addEventListener("click", async () => {
+      const { error } = await client.auth.signUp({
+        email: emailInput.value,
+        password: passwordInput.value,
+      });
+      if (error) {
+        alert("Erro ao cadastrar: " + error.message);
+      } else {
+        alert("Conta criada! Verifique seu e-mail antes de entrar.");
+      }
+    });
+
+    // Logout
+    logoutBtn.addEventListener("click", async () => {
+      await client.auth.signOut();
+      updateUI(null);
+    });
+
+    async function checkUser() {
+      const { data } = await client.auth.getUser();
+      updateUI(data.user);
     }
 
-    async function login() {
-      const email = emailInput.value;
-      const senha = senhaInput.value;
-      const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
-      if (error) alert("❌ Erro: " + error.message);
-      else mostrarFilmes();
+    function updateUI(user) {
+      if (user) {
+        userInfo.classList.remove("hidden");
+        authForms.classList.add("hidden");
+        userEmail.textContent = user.email;
+      } else {
+        userInfo.classList.add("hidden");
+        authForms.classList.remove("hidden");
+      }
     }
 
-    async function cadastrar() {
-      const email = emailInput.value;
-      const senha = senhaInput.value;
-      const { error } = await supabase.auth.signUp({ email, password: senha });
-      if (error) alert("❌ Erro ao cadastrar: " + error.message);
-      else alert("✅ Conta criada! Verifique seu e-mail para confirmar.");
-    }
-
-    async function logout() {
-      await supabase.auth.signOut();
-      mostrarLogin();
-    }
-
-    function mostrarFilmes() {
-      loginSection.style.display = 'none';
-      filmesSection.style.display = 'block';
-    }
-
-    function mostrarLogin() {
-      filmesSection.style.display = 'none';
-      loginSection.style.display = 'block';
-    }
-
-    window.login = login;
-    window.cadastrar = cadastrar;
-    window.logout = logout;
-
-    verificarSessao();
+    // Checar login ativo ao carregar
+    checkUser();
   </script>
 </body>
 </html>
