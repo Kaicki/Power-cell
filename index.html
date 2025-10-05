@@ -3,35 +3,43 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login - CineLogin</title>
+  <title>CineLogin - Sistema de Acesso</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
     body {
+      margin: 0;
       font-family: Arial, sans-serif;
-      background: #0d0d0d;
+      background: #0b0b0b;
       color: #fff;
+    }
+
+    .center {
       display: flex;
       align-items: center;
       justify-content: center;
       height: 100vh;
-      margin: 0;
     }
-    .container {
-      background: #1a1a1a;
+
+    .card {
+      background: #141414;
       padding: 30px;
-      border-radius: 12px;
+      border-radius: 14px;
       width: 90%;
       max-width: 400px;
+      box-shadow: 0 0 25px rgba(255, 255, 255, 0.05);
       text-align: center;
-      box-shadow: 0 0 15px rgba(255,255,255,0.1);
     }
+
     input {
       width: 100%;
       padding: 10px;
       margin: 8px 0;
       border: none;
       border-radius: 6px;
+      background: #222;
+      color: white;
     }
+
     button {
       width: 100%;
       padding: 10px;
@@ -41,29 +49,92 @@
       color: white;
       font-weight: bold;
       cursor: pointer;
+      margin-top: 6px;
     }
+
     button:hover {
       background: #f6121d;
     }
+
     .hidden {
       display: none;
+    }
+
+    /* Área interna */
+    #home {
+      display: none;
+      padding: 20px;
+    }
+
+    header {
+      background: #111;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      font-size: 1.4em;
+      color: #e50914;
+    }
+
+    .movies {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .movie {
+      background: #1f1f1f;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .movie img {
+      width: 100%;
+      border-radius: 8px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2 id="form-title">Entrar</h2>
-
-    <div id="auth-forms">
+  <!-- Login / Cadastro -->
+  <div class="center" id="auth-area">
+    <div class="card">
+      <h2 id="form-title">Acesso ao CineLogin</h2>
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Senha" required />
       <button id="login-btn">Entrar</button>
-      <button id="signup-btn" style="background:#444;margin-top:5px;">Criar Conta</button>
+      <button id="signup-btn" style="background:#444;">Criar Conta</button>
     </div>
+  </div>
 
-    <div id="user-info" class="hidden">
-      <p>Bem-vindo, <span id="user-email"></span></p>
-      <button id="logout-btn">Sair</button>
+  <!-- Área interna -->
+  <div id="home">
+    <header>
+      <h1>CineLogin</h1>
+      <div>
+        <span id="user-email"></span>
+        <button id="logout-btn" style="background:#444; padding:6px 10px; font-size:0.9em;">Sair</button>
+      </div>
+    </header>
+
+    <h2>Filmes disponíveis 🎬</h2>
+    <div class="movies">
+      <div class="movie">
+        <img src="https://m.media-amazon.com/images/I/81xTx-LzUzL._AC_SL1500_.jpg" alt="Filme 1">
+        <p>Matrix</p>
+      </div>
+      <div class="movie">
+        <img src="https://m.media-amazon.com/images/I/91bYsX41DVL._AC_SL1500_.jpg" alt="Filme 2">
+        <p>Vingadores</p>
+      </div>
+      <div class="movie">
+        <img src="https://m.media-amazon.com/images/I/71niXI3lxlL._AC_SL1188_.jpg" alt="Filme 3">
+        <p>Interestelar</p>
+      </div>
     </div>
   </div>
 
@@ -78,9 +149,9 @@
     const loginBtn = document.getElementById("login-btn");
     const signupBtn = document.getElementById("signup-btn");
     const logoutBtn = document.getElementById("logout-btn");
-    const userInfo = document.getElementById("user-info");
     const userEmail = document.getElementById("user-email");
-    const authForms = document.getElementById("auth-forms");
+    const authArea = document.getElementById("auth-area");
+    const home = document.getElementById("home");
 
     // Login
     loginBtn.addEventListener("click", async () => {
@@ -88,11 +159,8 @@
         email: emailInput.value,
         password: passwordInput.value,
       });
-      if (error) {
-        alert("Erro ao entrar: " + error.message);
-      } else {
-        checkUser();
-      }
+      if (error) alert("Erro ao entrar: " + error.message);
+      else checkUser();
     });
 
     // Cadastro
@@ -101,11 +169,8 @@
         email: emailInput.value,
         password: passwordInput.value,
       });
-      if (error) {
-        alert("Erro ao cadastrar: " + error.message);
-      } else {
-        alert("Conta criada! Verifique seu e-mail antes de entrar.");
-      }
+      if (error) alert("Erro ao criar conta: " + error.message);
+      else alert("Conta criada! Verifique seu e-mail antes de entrar.");
     });
 
     // Logout
@@ -121,16 +186,15 @@
 
     function updateUI(user) {
       if (user) {
-        userInfo.classList.remove("hidden");
-        authForms.classList.add("hidden");
+        authArea.style.display = "none";
+        home.style.display = "block";
         userEmail.textContent = user.email;
       } else {
-        userInfo.classList.add("hidden");
-        authForms.classList.remove("hidden");
+        authArea.style.display = "flex";
+        home.style.display = "none";
       }
     }
 
-    // Checar login ativo ao carregar
     checkUser();
   </script>
 </body>
