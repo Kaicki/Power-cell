@@ -1,27 +1,28 @@
 export default function Home() {
   return (
     <div style={{
+      fontFamily: "Arial, sans-serif",
+      backgroundColor: "#000",
+      color: "#fff",
+      minHeight: "100vh",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      height: "100vh",
-      background: "#000",
-      color: "#fff",
-      fontFamily: "Arial, sans-serif",
+      textAlign: "center"
     }}>
-      <h1>Power Cell ⚡</h1>
-      <p>Sistema de Orçamento Online</p>
+      <h1>⚡ PowerCell</h1>
+      <p>Assistência técnica e orçamentos rápidos</p>
       <a href="/orcamento" style={{
         marginTop: "20px",
-        padding: "10px 20px",
+        padding: "12px 24px",
         background: "#00ff88",
+        borderRadius: "10px",
         color: "#000",
-        borderRadius: "8px",
         textDecoration: "none",
         fontWeight: "bold"
       }}>
-        Solicitar Orçamento
+        Fazer orçamento
       </a>
     </div>
   );
