@@ -3,154 +3,148 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PowerCell ⚡</title>
+  <title>CinePower 🎬</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background-color: #000;
+      background: #000;
       color: #fff;
-      text-align: center;
     }
-
     header {
-      background-color: #111;
-      padding: 30px 10px;
-    }
-
-    h1 {
+      background: #111;
+      padding: 15px;
+      text-align: center;
       color: #00ff88;
-      margin-bottom: 5px;
     }
-
-    main {
-      padding: 30px;
-      max-width: 600px;
-      margin: auto;
-    }
-
-    .botao {
-      display: inline-block;
-      background: #00ff88;
-      color: #000;
-      padding: 15px 25px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: bold;
-      transition: 0.3s;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-
-    .botao:hover, button:hover {
-      background: #00e676;
-    }
-
-    .formulario {
-      display: none;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 20px;
-      animation: fadeIn 0.4s ease-in;
-    }
-
-    .formulario.active {
-      display: flex;
-    }
-
-    input, select, textarea, button {
+    input, button {
       padding: 10px;
+      margin: 8px;
       border-radius: 6px;
       border: none;
       outline: none;
-      font-size: 15px;
     }
-
+    input {
+      width: 80%;
+    }
     button {
       background: #00ff88;
-      color: #000;
-      font-weight: bold;
       cursor: pointer;
+      font-weight: bold;
     }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    button:hover { background: #00e676; }
+    .filmes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      padding: 20px;
     }
-
-    footer {
-      background-color: #111;
-      padding: 15px;
-      margin-top: 40px;
-      font-size: 14px;
-      color: #aaa;
+    .card {
+      background: #111;
+      padding: 10px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .card img {
+      width: 100%;
+      border-radius: 10px;
+    }
+    .center {
+      text-align: center;
+      padding: 40px 20px;
     }
   </style>
 </head>
 <body>
-
   <header>
-    <h1>⚡ PowerCell</h1>
-    <p>Assistência técnica e orçamentos rápidos</p>
+    <h1>CinePower 🎬</h1>
   </header>
 
-  <main>
-    <!-- Página inicial -->
-    <section id="inicio">
-      <h2>Bem-vindo à PowerCell</h2>
-      <p>Conserto de celulares, tablets e videogames com agilidade e garantia.</p>
-      <div class="botao" onclick="mostrarFormulario()">Solicitar orçamento</div>
-    </section>
+  <!-- LOGIN -->
+  <section id="login-section" class="center">
+    <h2>Entrar ou Cadastrar</h2>
+    <input type="email" id="email" placeholder="E-mail" required><br>
+    <input type="password" id="senha" placeholder="Senha" required><br>
+    <button onclick="login()">Entrar</button>
+    <button onclick="cadastrar()">Cadastrar</button>
+  </section>
 
-    <!-- Formulário de orçamento -->
-    <form id="formulario" class="formulario" onsubmit="enviarFormulario(event)">
-      <h2>Solicitar Orçamento</h2>
+  <!-- CATÁLOGO -->
+  <section id="filmes-section" style="display:none;">
+    <div style="text-align:center; margin-top:10px;">
+      <button onclick="logout()">Sair</button>
+    </div>
 
-      <input type="text" id="nome" placeholder="Seu nome" required>
-      <input type="tel" id="telefone" placeholder="(00) 00000-0000" required>
+    <div class="filmes">
+      <div class="card">
+        <img src="https://image.tmdb.org/t/p/w300/8YFL5QQVPy3AgrEQxNYVSgiPEbe.jpg" alt="Deadpool & Wolverine">
+        <p>Deadpool & Wolverine</p>
+      </div>
+      <div class="card">
+        <img src="https://image.tmdb.org/t/p/w300/r9j2FbQ1KnfFM0d0tRZh93hF8pf.jpg" alt="Duna: Parte 2">
+        <p>Duna: Parte 2</p>
+      </div>
+      <div class="card">
+        <img src="https://image.tmdb.org/t/p/w300/qNBAXBIQlnOThrVvA6mA2B5ggV6.jpg" alt="Avatar: O Caminho da Água">
+        <p>Avatar: O Caminho da Água</p>
+      </div>
+    </div>
+  </section>
 
-      <select id="tipo" required>
-        <option value="">Tipo de aparelho</option>
-        <option>Celular</option>
-        <option>Tablet</option>
-        <option>Videogame</option>
-      </select>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-      <input type="text" id="modelo" placeholder="Modelo do aparelho" required>
-      <textarea id="descricao" rows="4" placeholder="Descreva o problema" required></textarea>
+    const SUPABASE_URL = "https://SEU-PROJETO.supabase.co";
+    const SUPABASE_ANON_KEY = "SUA-CHAVE-ANON";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      <button type="submit">Enviar</button>
-      <div class="botao" onclick="voltarInicio()">← Voltar</div>
-    </form>
-  </main>
+    const loginSection = document.getElementById('login-section');
+    const filmesSection = document.getElementById('filmes-section');
+    const emailInput = document.getElementById('email');
+    const senhaInput = document.getElementById('senha');
 
-  <footer>
-    <p>© 2025 PowerCell - Todos os direitos reservados</p>
-  </footer>
-
-  <script>
-    const inicio = document.getElementById('inicio');
-    const formulario = document.getElementById('formulario');
-
-    function mostrarFormulario() {
-      inicio.style.display = 'none';
-      formulario.classList.add('active');
+    async function verificarSessao() {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) mostrarFilmes();
+      else mostrarLogin();
     }
 
-    function voltarInicio() {
-      formulario.classList.remove('active');
-      inicio.style.display = 'block';
+    async function login() {
+      const email = emailInput.value;
+      const senha = senhaInput.value;
+      const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+      if (error) alert("❌ Erro: " + error.message);
+      else mostrarFilmes();
     }
 
-    function enviarFormulario(e) {
-      e.preventDefault();
-      alert("✅ Orçamento enviado com sucesso!\nEntraremos em contato em breve.");
-      e.target.reset();
-      voltarInicio();
+    async function cadastrar() {
+      const email = emailInput.value;
+      const senha = senhaInput.value;
+      const { error } = await supabase.auth.signUp({ email, password: senha });
+      if (error) alert("❌ Erro ao cadastrar: " + error.message);
+      else alert("✅ Conta criada! Verifique seu e-mail para confirmar.");
     }
+
+    async function logout() {
+      await supabase.auth.signOut();
+      mostrarLogin();
+    }
+
+    function mostrarFilmes() {
+      loginSection.style.display = 'none';
+      filmesSection.style.display = 'block';
+    }
+
+    function mostrarLogin() {
+      filmesSection.style.display = 'none';
+      loginSection.style.display = 'block';
+    }
+
+    window.login = login;
+    window.cadastrar = cadastrar;
+    window.logout = logout;
+
+    verificarSessao();
   </script>
 </body>
 </html>
