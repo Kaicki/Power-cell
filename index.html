@@ -3,147 +3,227 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PowerCell Filmes</title>
+  <title>Cine Kaicki 🎬</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #0d0d0d;
-      color: white;
-      text-align: center;
       margin: 0;
-      padding: 0;
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
     }
-    input, button {
-      margin: 5px;
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-    }
-    input {
-      width: 250px;
-    }
-    button {
-      cursor: pointer;
-      background-color: #00ffff;
-      color: #000;
+
+    header {
+      background: #111;
+      padding: 15px;
+      text-align: center;
+      font-size: 22px;
       font-weight: bold;
     }
-    #painel, #filmes { display: none; margin-top: 20px; }
-    ul { list-style: none; padding: 0; }
-    li { margin: 5px 0; }
+
+    /* Login */
+    #login {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      gap: 10px;
+    }
+
+    input {
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      width: 80%;
+      max-width: 300px;
+      font-size: 16px;
+    }
+
+    button {
+      background: #e50914;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    /* Catálogo */
+    .catalogo {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      padding: 20px;
+    }
+
+    .filme {
+      background: #111;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: transform 0.3s;
+      cursor: pointer;
+    }
+
+    .filme:hover {
+      transform: scale(1.05);
+    }
+
+    .filme img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+    }
+
+    .filme h3 {
+      text-align: center;
+      font-size: 16px;
+      padding: 10px;
+    }
+
+    /* Player */
+    .player {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+
+    iframe {
+      width: 100%;
+      height: 80vh;
+      border: none;
+    }
+
+    /* Painel Admin */
+    #painel {
+      display: none;
+      padding: 20px;
+    }
+
+    #painel input {
+      width: 90%;
+      margin-bottom: 10px;
+    }
+
+    .voltar {
+      background: #e50914;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-bottom: 20px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-  <h1>🎬 PowerCell Filmes</h1>
+  <header>🍿 Cine Kaicki</header>
 
-  <div id="auth">
-    <input type="email" id="email" placeholder="Seu e-mail"><br>
-    <input type="password" id="senha" placeholder="Sua senha"><br>
+  <!-- LOGIN -->
+  <div id="login">
+    <h2>Login do Administrador</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="senha" placeholder="Senha">
     <button onclick="login()">Entrar</button>
-    <button onclick="cadastro()">Criar conta</button><br>
-    <button onclick="recuperarSenha()">Esqueci minha senha</button>
-    <p id="msg"></p>
+    <p id="msgLogin"></p>
   </div>
 
+  <!-- CATÁLOGO -->
+  <div class="catalogo" id="catalogo" style="display:none;"></div>
+
+  <!-- PLAYER -->
+  <div class="player" id="player">
+    <button class="voltar" onclick="voltar()">⬅ Voltar</button>
+    <iframe id="iframeFilme" allowfullscreen allow="autoplay"></iframe>
+  </div>
+
+  <!-- PAINEL ADMIN -->
   <div id="painel">
     <h2>Painel do Admin</h2>
-    <input type="text" id="titulo" placeholder="Título do filme"><br>
-    <input type="url" id="link" placeholder="Link do filme"><br>
+    <input type="text" id="titulo" placeholder="Título do Filme">
+    <input type="text" id="imagem" placeholder="URL da Capa">
+    <input type="text" id="idDrive" placeholder="ID do Google Drive">
     <button onclick="adicionarFilme()">Adicionar Filme</button>
-    <button onclick="logout()">Sair</button>
-    <p id="painelMsg"></p>
+    <button onclick="sair()">Sair</button>
   </div>
 
-  <div id="filmes">
-    <h2>Filmes disponíveis</h2>
-    <ul id="lista"></ul>
-    <button onclick="logout()">Sair</button>
-  </div>
-
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script>
-    const supabaseUrl = "https://ufzaejihymezkmqehgfh.supabase.co";
-    const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmemFlamloeW1lemttcWVoZ2ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2ODk3NzcsImV4cCI6MjA3NTI2NTc3N30.NaxHwq_Eb9BAhbNvPmgme5YNb4V2dawBB2fEpfXwzdQ";
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+    // 🔑 Configure sua Supabase aqui:
+    const SUPABASE_URL = "https://ufzaejihymezkmqehgfh.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmemFlamloeW1lemttcWVoZ2ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2ODk3NzcsImV4cCI6MjA3NTI2NTc3N30.NaxHwq_Eb9BAhbNvPmgme5YNb4V2dawBB2fEpfXwzdQ";
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const msg = document.getElementById("msg");
-    const auth = document.getElementById("auth");
-    const painel = document.getElementById("painel");
-    const filmesDiv = document.getElementById("filmes");
-    const lista = document.getElementById("lista");
-
+    // Login do administrador
     async function login() {
-      const email = document.getElementById("email").value.trim();
-      const senha = document.getElementById("senha").value.trim();
-      msg.textContent = "Entrando...";
+      const email = document.getElementById('email').value.trim();
+      const senha = document.getElementById('senha').value.trim();
+      const msg = document.getElementById('msgLogin');
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
+      const { data, error } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('email', email)
+        .eq('senha', senha)
+        .single();
 
-      if (error) {
-        msg.textContent = "❌ Erro: " + error.message;
+      if (error || !data) {
+        msg.textContent = '❌ Email ou senha incorretos';
       } else {
-        msg.textContent = "✅ Login bem-sucedido!";
-        checarAdmin(email);
+        msg.textContent = '✅ Login bem-sucedido!';
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('painel').style.display = 'block';
+        carregarCatalogo();
       }
     }
 
-    async function cadastro() {
-      const email = document.getElementById("email").value.trim();
-      const senha = document.getElementById("senha").value.trim();
-      msg.textContent = "Criando conta...";
-
-      const { data, error } = await supabase.auth.signUp({ email, password: senha });
-
-      if (error) {
-        msg.textContent = "❌ " + error.message;
-      } else {
-        msg.textContent = "✅ Conta criada! Verifique seu e-mail.";
-      }
-    }
-
-    async function recuperarSenha() {
-      const email = document.getElementById("email").value.trim();
-      if (!email) return msg.textContent = "Digite seu e-mail primeiro!";
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
-      msg.textContent = error ? "Erro: " + error.message : "E-mail de redefinição enviado!";
-    }
-
-    async function checarAdmin(email) {
-      auth.style.display = "none";
-      const { data, error } = await supabase.from("admins").select("*").eq("email", email.toLowerCase());
-      if (data && data.length > 0) {
-        painel.style.display = "block";
-      }
-      filmesDiv.style.display = "block";
-      carregarFilmes();
-    }
-
+    // Adicionar filme
     async function adicionarFilme() {
-      const titulo = document.getElementById("titulo").value;
-      const link = document.getElementById("link").value;
-      const { error } = await supabase.from("filmes").insert([{ titulo, link }]);
-      document.getElementById("painelMsg").textContent = error ? "Erro: " + error.message : "✅ Filme adicionado!";
-      carregarFilmes();
+      const titulo = document.getElementById('titulo').value;
+      const imagem = document.getElementById('imagem').value;
+      const idDrive = document.getElementById('idDrive').value;
+
+      if (!titulo || !imagem || !idDrive) return alert("Preencha todos os campos!");
+
+      await supabase.from('filmes').insert([{ titulo, imagem, idDrive }]);
+      alert("Filme adicionado!");
+      carregarCatalogo();
     }
 
-    async function carregarFilmes() {
-      const { data, error } = await supabase.from("filmes").select("*");
-      lista.innerHTML = "";
-      if (data) {
-        data.forEach(f => {
-          const li = document.createElement("li");
-          li.innerHTML = `<a href="${f.link}" target="_blank" style="color:#0ff">${f.titulo}</a>`;
-          lista.appendChild(li);
-        });
-      }
+    // Mostrar catálogo
+    async function carregarCatalogo() {
+      const { data } = await supabase.from('filmes').select('*');
+      const catalogo = document.getElementById('catalogo');
+      catalogo.innerHTML = '';
+
+      data.forEach(f => {
+        catalogo.innerHTML += `
+          <div class="filme" onclick="abrirFilme('${f.idDrive}')">
+            <img src="${f.imagem}" alt="${f.titulo}">
+            <h3>${f.titulo}</h3>
+          </div>`;
+      });
+
+      catalogo.style.display = 'grid';
     }
 
-    async function logout() {
-      await supabase.auth.signOut();
-      painel.style.display = "none";
-      filmesDiv.style.display = "none";
-      auth.style.display = "block";
-      msg.textContent = "Você saiu da conta.";
+    // Player
+    function abrirFilme(id) {
+      document.getElementById('catalogo').style.display = 'none';
+      document.getElementById('player').style.display = 'block';
+      document.getElementById('iframeFilme').src = `https://drive.google.com/file/d/${id}/preview`;
+    }
+
+    function voltar() {
+      document.getElementById('iframeFilme').src = '';
+      document.getElementById('player').style.display = 'none';
+      document.getElementById('catalogo').style.display = 'grid';
+    }
+
+    function sair() {
+      document.getElementById('painel').style.display = 'none';
+      document.getElementById('login').style.display = 'flex';
     }
   </script>
 </body>
