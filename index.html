@@ -3,108 +3,183 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login Admin - Filmes Hub</title>
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<title>Sistema de Login - FilmesHub</title>
 <style>
   body {
-    background: #121212;
-    color: #fff;
+    margin: 0;
     font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #000, #1a1a1a);
+    color: #fff;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    margin: 0;
   }
   .box {
-    background: #1e1e1e;
-    padding: 25px;
+    background: #111;
+    padding: 30px;
     border-radius: 12px;
-    box-shadow: 0 0 10px #000;
+    box-shadow: 0 0 20px rgba(0,0,0,0.6);
     width: 320px;
     text-align: center;
   }
   input {
     width: 90%;
-    margin: 8px 0;
     padding: 10px;
+    margin: 10px 0;
     border: none;
     border-radius: 5px;
-    font-size: 15px;
   }
   button {
+    width: 95%;
     background: #f1c40f;
     border: none;
     padding: 10px;
-    width: 95%;
     border-radius: 5px;
     font-weight: bold;
     cursor: pointer;
   }
-  button:hover { background: #ffda4f; }
-  #painel { display: none; }
+  button:hover {
+    background: #ffda4f;
+  }
+  #painelUser, #painelAdmin, #cadastroBox {
+    display: none;
+  }
 </style>
 </head>
 <body>
 
+<!-- LOGIN -->
 <div class="box" id="loginBox">
-  <h2>Login Admin 🎬</h2>
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="senha" placeholder="Senha">
-  <button id="btnLogin">Entrar</button>
-  <p id="msg" style="color:red;"></p>
+  <h2>Login 🎬</h2>
+  <input type="text" id="loginUser" placeholder="Usuário">
+  <input type="password" id="loginPass" placeholder="Senha">
+  <button onclick="login()">Entrar</button>
+  <p id="msgLogin" style="color:red;"></p>
+  <p>Ainda não tem conta? <a href="#" onclick="mostrarCadastro()">Cadastre-se</a></p>
 </div>
 
-<div class="box" id="painel">
-  <h2>Painel do Admin</h2>
-  <p>Bem-vindo, <span id="userEmail"></span>!</p>
+<!-- CADASTRO -->
+<div class="box" id="cadastroBox">
+  <h2>Criar Conta ✨</h2>
+  <input type="text" id="cadUser" placeholder="Usuário">
+  <input type="password" id="cadPass" placeholder="Senha">
+  <button onclick="cadastrar()">Cadastrar</button>
+  <p id="msgCadastro" style="color:lime;"></p>
+  <p>Já tem conta? <a href="#" onclick="mostrarLogin()">Voltar</a></p>
+</div>
+
+<!-- PAINEL USUÁRIO -->
+<div class="box" id="painelUser">
+  <h2>Bem-vindo, <span id="nomeUser"></span> 🍿</h2>
+  <p>Você está logado como usuário.</p>
+  <button onclick="logout()" style="background:#e74c3c;">Sair</button>
+</div>
+
+<!-- PAINEL ADMIN -->
+<div class="box" id="painelAdmin">
+  <h2>Painel do Admin 👑</h2>
+  <p>Bem-vindo, <span id="nomeAdmin"></span>!</p>
+  <hr>
+  <h3>🎥 Gerenciar Filmes</h3>
+  <p>Aqui você pode adicionar links e players futuramente.</p>
   <button onclick="logout()" style="background:#e74c3c;">Sair</button>
 </div>
 
 <script>
-const SUPABASE_URL = "https://robypvvfbortngafgmwa.supabase.co"; // ✅ Seu projeto novo
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvYnlwdnZmYm9ydG5nYWZnbXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2OTM3NDMsImV4cCI6MjA3NTI2OTc0M30.I-ax6h6xChhM2GtzyUofvUsMj4y9qfyzHBZFPSBP2cw";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const ADMIN_USER = "admin";
+const ADMIN_PASS = "123456";
 
-document.getElementById("btnLogin").addEventListener("click", async () => {
-  const email = document.getElementById("email").value.trim();
-  const senha = document.getElementById("senha").value.trim();
-  const msg = document.getElementById("msg");
+function salvarUsuarios(usuarios) {
+  localStorage.setItem("usuarios", JSON.stringify(usuarios));
+}
 
-  if (!email || !senha) {
-    msg.textContent = "Preencha todos os campos.";
+function obterUsuarios() {
+  return JSON.parse(localStorage.getItem("usuarios") || "[]");
+}
+
+function cadastrar() {
+  const user = document.getElementById("cadUser").value.trim();
+  const pass = document.getElementById("cadPass").value.trim();
+  const msg = document.getElementById("msgCadastro");
+
+  if (!user || !pass) {
+    msg.style.color = "red";
+    msg.textContent = "Preencha todos os campos!";
     return;
   }
 
-  const { data, error } = await supabase
-    .from("Adm")
-    .select("*")
-    .eq("Email", email)
-    .eq("Senha", senha)
-    .single();
+  const usuarios = obterUsuarios();
 
-  if (error || !data) {
-    msg.textContent = "Email ou senha incorretos.";
-  } else {
-    localStorage.setItem("adminEmail", email);
-    mostrarPainel(email);
+  if (usuarios.some(u => u.user === user)) {
+    msg.style.color = "red";
+    msg.textContent = "Usuário já existe!";
+    return;
   }
-});
 
-function mostrarPainel(email) {
+  usuarios.push({ user, pass });
+  salvarUsuarios(usuarios);
+
+  msg.style.color = "lime";
+  msg.textContent = "Conta criada com sucesso!";
+  setTimeout(mostrarLogin, 1500);
+}
+
+function login() {
+  const user = document.getElementById("loginUser").value.trim();
+  const pass = document.getElementById("loginPass").value.trim();
+  const msg = document.getElementById("msgLogin");
+
+  if (user === ADMIN_USER && pass === ADMIN_PASS) {
+    localStorage.setItem("logado", JSON.stringify({ tipo: "admin", nome: user }));
+    mostrarPainel();
+    return;
+  }
+
+  const usuarios = obterUsuarios();
+  const usuario = usuarios.find(u => u.user === user && u.pass === pass);
+
+  if (usuario) {
+    localStorage.setItem("logado", JSON.stringify({ tipo: "user", nome: user }));
+    mostrarPainel();
+  } else {
+    msg.textContent = "Usuário ou senha incorretos!";
+  }
+}
+
+function mostrarPainel() {
+  const loginData = JSON.parse(localStorage.getItem("logado"));
+
   document.getElementById("loginBox").style.display = "none";
-  document.getElementById("painel").style.display = "block";
-  document.getElementById("userEmail").textContent = email;
+  document.getElementById("cadastroBox").style.display = "none";
+
+  if (loginData.tipo === "admin") {
+    document.getElementById("painelAdmin").style.display = "block";
+    document.getElementById("nomeAdmin").textContent = loginData.nome;
+  } else {
+    document.getElementById("painelUser").style.display = "block";
+    document.getElementById("nomeUser").textContent = loginData.nome;
+  }
+}
+
+function mostrarLogin() {
+  document.getElementById("cadastroBox").style.display = "none";
+  document.getElementById("loginBox").style.display = "block";
+}
+
+function mostrarCadastro() {
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("cadastroBox").style.display = "block";
 }
 
 function logout() {
-  localStorage.removeItem("adminEmail");
+  localStorage.removeItem("logado");
   location.reload();
 }
 
 window.onload = () => {
-  const admin = localStorage.getItem("adminEmail");
-  if (admin) mostrarPainel(admin);
+  const loginData = JSON.parse(localStorage.getItem("logado"));
+  if (loginData) mostrarPainel();
 };
 </script>
 
