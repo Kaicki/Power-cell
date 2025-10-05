@@ -1,110 +1,105 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel de Admin - CineLogin</title>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .container {
-      width: 90%;
-      max-width: 400px;
-      background: #222;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px #000;
-    }
-    h2 { text-align: center; margin-bottom: 20px; }
-    input {
-      width: 100%; padding: 10px; margin: 10px 0;
-      border: none; border-radius: 8px; outline: none;
-    }
-    button {
-      width: 100%; padding: 10px;
-      background: #ffcc00; color: #000;
-      border: none; border-radius: 8px; font-weight: bold;
-      cursor: pointer; transition: 0.3s;
-    }
-    button:hover { background: #ffdb4d; }
-    #painel {
-      display: none;
-      text-align: center;
-    }
-    #logout {
-      background: #f33;
-      color: #fff;
-      margin-top: 15px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login Admin - CinePainel</title>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<style>
+  body {
+    background: #121212;
+    color: #fff;
+    font-family: Arial;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+  .box {
+    background: #1e1e1e;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px #000;
+    width: 320px;
+    text-align: center;
+  }
+  input {
+    width: 90%;
+    margin: 8px 0;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+  }
+  button {
+    background: #f1c40f;
+    border: none;
+    padding: 10px;
+    width: 95%;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  button:hover { background: #ffda4f; }
+  #painel { display: none; text-align: center; }
+</style>
 </head>
 <body>
-  <div class="container" id="login">
-    <h2>Login do Administrador</h2>
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="senha" placeholder="Senha">
-    <button id="btnLogin">Entrar</button>
-  </div>
 
-  <div class="container" id="painel">
-    <h2>Painel do Administrador</h2>
-    <p>Bem-vindo, <span id="adminEmail"></span>!</p>
-    <button id="logout">Sair</button>
-  </div>
+<div class="box" id="loginBox">
+  <h2>Login Admin 🎬</h2>
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="senha" placeholder="Senha">
+  <button id="btnLogin">Entrar</button>
+  <p id="msg" style="color:red;"></p>
+</div>
 
-  <script>
-    const SUPABASE_URL = "https://SEU-PROJETO.supabase.co";
-    const SUPABASE_ANON_KEY = "SUA_CHAVE_ANON";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+<div class="box" id="painel">
+  <h2>Painel do Admin</h2>
+  <p>Bem-vindo, <span id="userEmail"></span>!</p>
+  <button onclick="logout()" style="background:#e74c3c;">Sair</button>
+</div>
 
-    const btnLogin = document.getElementById("btnLogin");
-    const painel = document.getElementById("painel");
-    const login = document.getElementById("login");
-    const adminEmail = document.getElementById("adminEmail");
-    const logout = document.getElementById("logout");
+<script>
+const SUPABASE_URL = "https://robypvvfbortngafgmwa.supabase.co"; // coloque o seu URL aqui
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvYnlwdnZmYm9ydG5nYWZnbXdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2OTM3NDMsImV4cCI6MjA3NTI2OTc0M30.I-ax6h6xChhM2GtzyUofvUsMj4y9qfyzHBZFPSBP2cw"; // coloque sua chave aqui
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    btnLogin.addEventListener("click", async () => {
-      const email = document.getElementById("email").value.trim();
-      const senha = document.getElementById("senha").value.trim();
+document.getElementById("btnLogin").addEventListener("click", async () => {
+  const email = document.getElementById("email").value.trim();
+  const senha = document.getElementById("senha").value.trim();
+  const msg = document.getElementById("msg");
 
-      if (!email || !senha) {
-        alert("Preencha todos os campos!");
-        return;
-      }
+  const { data, error } = await supabase
+    .from("adm")
+    .select("*")
+    .eq("email", email)
+    .eq("senha", senha)
+    .single();
 
-      const { data, error } = await supabase
-        .from("adm")
-        .select("*")
-        .eq("email", email)
-        .eq("senha", senha);
+  if (error || !data) {
+    msg.textContent = "Email ou senha incorretos.";
+  } else {
+    localStorage.setItem("adminEmail", email);
+    mostrarPainel(email);
+  }
+});
 
-      if (error) {
-        alert("Erro ao conectar: " + error.message);
-        return;
-      }
+function mostrarPainel(email) {
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("painel").style.display = "block";
+  document.getElementById("userEmail").textContent = email;
+}
 
-      if (data.length > 0) {
-        login.style.display = "none";
-        painel.style.display = "block";
-        adminEmail.textContent = email;
-      } else {
-        alert("Email ou senha incorretos!");
-      }
-    });
+function logout() {
+  localStorage.removeItem("adminEmail");
+  location.reload();
+}
 
-    logout.addEventListener("click", () => {
-      painel.style.display = "none";
-      login.style.display = "block";
-    });
-  </script>
+window.onload = () => {
+  const admin = localStorage.getItem("adminEmail");
+  if (admin) mostrarPainel(admin);
+};
+</script>
 </body>
 </html>
