@@ -1,257 +1,527 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CineHub 💜</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CinePower — Catálogo</title>
 <style>
-  body {
-    margin: 0;
-    font-family: "Poppins", Arial, sans-serif;
-    background: linear-gradient(135deg, #2a004f, #120026);
-    color: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+  :root{
+    --bg:#120018;        /* roxo escuro */
+    --panel:#1b0726;
+    --muted:#9b86a6;
+    --accent:#9b59b6;     /* roxo neon */
+    --card:#20122a;
+    --text:#f5eef9;
+    --shadow: 0 6px 20px rgba(0,0,0,0.6);
+    --glass: rgba(255,255,255,0.02);
   }
-  .box {
-    background: rgba(40, 0, 70, 0.9);
-    padding: 30px;
-    border-radius: 16px;
-    box-shadow: 0 0 25px rgba(150, 50, 255, 0.5);
-    width: 340px;
-    text-align: center;
-    backdrop-filter: blur(8px);
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:Inter,system-ui,Segoe UI,Roboto,Arial;
+    background:linear-gradient(180deg,var(--bg),#0a0010);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
   }
-  input, textarea {
-    width: 90%;
-    padding: 10px;
-    margin: 8px 0;
-    border: none;
-    border-radius: 8px;
-    outline: none;
-    background: #33005a;
-    color: #fff;
+
+  /* Header */
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:18px 22px;
+    background:linear-gradient(90deg, rgba(255,255,255,0.02), transparent);
+    border-bottom:1px solid rgba(255,255,255,0.03);
+    position:sticky; top:0; z-index:40;
   }
-  input::placeholder, textarea::placeholder {
-    color: #bbb;
+  .brand{
+    display:flex; gap:14px; align-items:center;
   }
-  button {
-    width: 95%;
-    background: linear-gradient(90deg, #8e2de2, #4a00e0);
-    border: none;
-    padding: 10px;
-    border-radius: 8px;
-    font-weight: bold;
-    color: #fff;
-    cursor: pointer;
-    transition: 0.3s;
+  .logo{
+    width:42px; height:42px; border-radius:8px;
+    background:linear-gradient(135deg, var(--accent), #6f2fa3);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; color:white; box-shadow:var(--shadow);
   }
-  button:hover {
-    transform: scale(1.05);
-    background: linear-gradient(90deg, #a64bf4, #6b00ff);
+  h1{ margin:0; font-size:20px; letter-spacing:1px; color:var(--text) }
+  .controls{display:flex; gap:12px; align-items:center}
+
+  /* Top search */
+  .search-wrap{display:flex; gap:10px; align-items:center}
+  .search{
+    display:flex; align-items:center; gap:8px;
+    background:var(--panel); padding:8px 12px; border-radius:999px;
+    border:1px solid rgba(255,255,255,0.03);
   }
-  a {
-    color: #c79eff;
-    text-decoration: none;
+  .search input{
+    background:transparent; border:none; outline:none; color:var(--text);
+    width:180px; font-size:15px;
   }
-  #painelUser, #painelAdmin, #cadastroBox { display: none; }
-  iframe {
-    width: 100%;
-    height: 200px;
-    border-radius: 10px;
-    border: none;
+  .btn{
+    background:var(--accent); color:white; padding:8px 12px; border-radius:10px;
+    border:none; cursor:pointer; font-weight:600; box-shadow:0 6px 16px rgba(155,89,182,0.18);
   }
-  .filme {
-    background: rgba(70, 0, 120, 0.5);
-    padding: 10px;
-    border-radius: 10px;
-    margin: 10px 0;
-    box-shadow: 0 0 10px rgba(150, 50, 255, 0.3);
+  .ghost{ background:transparent; border:1px solid rgba(255,255,255,0.05); color:var(--muted) }
+
+  /* Layout */
+  main{ padding:18px; max-width:1200px; margin:0 auto; }
+
+  /* Catalog grid */
+  .catalogo{
+    display:grid;
+    grid-template-columns: repeat(auto-fill,minmax(170px,1fr));
+    gap:14px;
+    margin-top:18px;
   }
-  img {
-    width: 100%;
-    border-radius: 10px;
+  .card{
+    background:var(--card); border-radius:10px; overflow:hidden; text-align:center;
+    box-shadow:var(--shadow); display:flex; flex-direction:column;
+    transition:transform .14s ease, box-shadow .14s;
   }
-  h2, h3 { color: #d6b0ff; }
+  .card:hover{ transform:translateY(-6px); }
+  .thumb{
+    width:100%; aspect-ratio: 2/3; object-fit:cover; background:#111;
+  }
+  .title{
+    padding:10px; font-weight:700; font-size:14px; letter-spacing:0.6px;
+    background:linear-gradient(0deg, rgba(0,0,0,0.12), transparent);
+    color:var(--text);
+  }
+  .card-controls{
+    display:flex; gap:8px; padding:10px; justify-content:center;
+  }
+  .small{ padding:6px 8px; border-radius:8px; font-size:13px; cursor:pointer; border:none }
+
+  /* Modal player */
+  .modal{
+    position:fixed; inset:0; background:rgba(3,0,6,0.7); display:none;
+    align-items:center; justify-content:center; z-index:90;
+  }
+  .modal.open{ display:flex; }
+  .modal-box{
+    width:94%; max-width:1000px; background:var(--panel); border-radius:12px; padding:12px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.6);
+  }
+  .modal iframe{ width:100%; height:60vh; border-radius:8px; border:0; background:#000; }
+
+  /* Admin panel */
+  .admin-panel{
+    position:fixed; right:18px; bottom:18px; z-index:60;
+  }
+  .admin-btn{ background:linear-gradient(180deg,var(--accent),#6f2fa3); color:white; padding:12px 14px; border-radius:12px; border:none; cursor:pointer; box-shadow:0 10px 30px rgba(155,89,182,0.2) }
+  .adm-modal{
+    position:fixed; right:18px; bottom:80px; width:360px; max-width:94%;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+    border-radius:12px; padding:14px; box-shadow:var(--shadow);
+    display:none; z-index:70;
+  }
+  .adm-modal.open{ display:block; }
+  .field{ display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+  .field input, .field textarea{
+    background:var(--panel); border:1px solid rgba(255,255,255,0.03);
+    color:var(--text); padding:8px 10px; border-radius:8px;
+  }
+  label{font-size:13px; color:var(--muted) }
+
+  /* Login panel */
+  .auth{
+    max-width:420px; margin:28px auto; background:var(--panel); border-radius:12px; padding:18px;
+    box-shadow:var(--shadow);
+  }
+  .auth h2{ text-align:center; margin:6px 0 12px; color:var(--text) }
+  .row{ display:flex; gap:8px; margin-top:8px }
+  .muted{ color:var(--muted); font-size:13px; text-align:center; margin-top:8px }
+
+  /* top user badge */
+  .user-badge{ background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:999px; display:flex; gap:10px; align-items:center; color:var(--muted) }
+
+  /* responsive */
+  @media (max-width:600px){
+    .search input{ width:110px }
+    .catalogo{ grid-template-columns: repeat(auto-fill,minmax(140px,1fr)) }
+  }
+
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div class="box" id="loginBox">
-  <h2>Login 💜</h2>
-  <input type="text" id="loginUser" placeholder="Usuário">
-  <input type="password" id="loginPass" placeholder="Senha">
-  <button onclick="login()">Entrar</button>
-  <p id="msgLogin" style="color:#ff7b7b;"></p>
-  <p>Ainda não tem conta? <a href="#" onclick="mostrarCadastro()">Cadastre-se</a></p>
+<header>
+  <div class="brand">
+    <div class="logo">CP</div>
+    <div>
+      <h1>CinePower</h1>
+      <div style="font-size:12px;color:var(--muted)">Filmes & Player</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="search-wrap">
+      <div class="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="opacity:.9">
+          <path d="M21 21l-4.35-4.35" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
+          <circle cx="11" cy="11" r="6" stroke="white" stroke-width="1.6"></circle>
+        </svg>
+        <input id="searchInput" placeholder="Pesquisar filme..." />
+      </div>
+      <button class="btn ghost" id="sortBtn">Ordenar A-Z</button>
+    </div>
+
+    <div id="userArea"></div>
+  </div>
+</header>
+
+<main>
+  <!-- Auth box (mostre quando não estiver logado) -->
+  <div id="authBox" class="auth" style="display:none">
+    <h2>Entrar ou Cadastrar</h2>
+    <div class="field">
+      <label>Nome de usuário</label>
+      <input id="usernameInput" placeholder="ex: kaicki ou email" />
+    </div>
+    <div class="field">
+      <label>Senha (mínimo 6 caracteres)</label>
+      <input id="passwordInput" type="password" placeholder="sua senha" />
+    </div>
+    <div style="display:flex; gap:8px; justify-content:center; margin-top:8px">
+      <button class="btn" id="loginBtn">Entrar</button>
+      <button class="btn ghost" id="registerBtn">Cadastrar</button>
+    </div>
+    <div class="muted">Admin padrão: <b>kaicki</b> / <b>123456</b></div>
+  </div>
+
+  <!-- Catalog -->
+  <div id="catalogSection" style="display:none">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px">
+      <h2 style="margin:0">Catálogo</h2>
+      <div style="color:var(--muted)">Adicione filmes no Painel ADM (se for admin)</div>
+    </div>
+
+    <div class="catalogo" id="catalogo"></div>
+  </div>
+</main>
+
+<!-- Player modal -->
+<div class="modal" id="playerModal">
+  <div class="modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;">
+      <div id="playerTitle" style="font-weight:700"></div>
+      <div style="display:flex; gap:8px">
+        <button class="btn ghost" id="closePlayer">Fechar</button>
+      </div>
+    </div>
+    <iframe id="playerFrame" allowfullscreen sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
+  </div>
 </div>
 
-<!-- CADASTRO -->
-<div class="box" id="cadastroBox">
-  <h2>Criar Conta ✨</h2>
-  <input type="text" id="cadUser" placeholder="Usuário">
-  <input type="password" id="cadPass" placeholder="Senha">
-  <button onclick="cadastrar()">Cadastrar</button>
-  <p id="msgCadastro" style="color:lime;"></p>
-  <p>Já tem conta? <a href="#" onclick="mostrarLogin()">Voltar</a></p>
-</div>
+<!-- Admin floating -->
+<div class="admin-panel" id="adminPanel" style="display:none">
+  <button class="admin-btn" id="openAdmin">Painel ADM</button>
+  <div class="adm-modal" id="admModal">
+    <h3 style="margin:4px 0 10px">Painel Administrativo</h3>
 
-<!-- PAINEL USUÁRIO -->
-<div class="box" id="painelUser">
-  <h2>🎬 Filmes Disponíveis</h2>
-  <div id="listaFilmes"></div>
-  <button onclick="logout()" style="background:#8e44ad;">Sair</button>
-</div>
+    <div class="field"><label>Título</label><input id="filmTitle" placeholder="Nome do filme" /></div>
+    <div class="field"><label>ID ou Link do Google Drive</label><input id="filmDrive" placeholder="Colar ID ou link (ex: https://drive.google.com/file/d/ABC123/view)" /></div>
+    <div class="field"><label>Link da Capa (imagem)</label><input id="filmCover" placeholder="URL da imagem" /></div>
+    <div style="display:flex; gap:8px; justify-content:flex-end">
+      <button class="btn ghost" id="closeAdmin">Fechar</button>
+      <button class="btn" id="addFilmBtn">Adicionar filme</button>
+    </div>
 
-<!-- PAINEL ADMIN -->
-<div class="box" id="painelAdmin">
-  <h2>Painel do Admin 👑</h2>
-  <p>Bem-vindo, <span id="nomeAdmin"></span>!</p>
-  <hr>
-  <h3>Adicionar Filme 🎞️</h3>
-  <input type="text" id="nomeFilme" placeholder="Título do filme">
-  <input type="text" id="capaFilme" placeholder="URL da capa (opcional)">
-  <textarea id="linkFilme" placeholder="Link do player (iframe/embed)"></textarea>
-  <button onclick="adicionarFilme()">Adicionar</button>
-  <p id="msgFilme" style="color:lime;"></p>
-  <hr>
-  <h3>Filmes adicionados:</h3>
-  <div id="filmesAdmin"></div>
-  <button onclick="logout()" style="background:#8e44ad;">Sair</button>
+    <hr style="border:none; height:1px; background: rgba(255,255,255,0.02); margin:12px 0" />
+
+    <div id="adminList"></div>
+
+  </div>
 </div>
 
 <script>
-const ADMIN_USER = "admin";
-const ADMIN_PASS = "123456";
+/* ===========================
+   Storage & inicialização
+   =========================== */
+const LS_USERS = 'cine_users_v1';
+const LS_FILMS = 'cine_films_v1';
+const LS_SESSION = 'cine_session_v1';
 
-function salvarUsuarios(usuarios){ localStorage.setItem("usuarios", JSON.stringify(usuarios)); }
-function obterUsuarios(){ return JSON.parse(localStorage.getItem("usuarios") || "[]"); }
-function salvarFilmes(filmes){ localStorage.setItem("filmes", JSON.stringify(filmes)); }
-function obterFilmes(){ return JSON.parse(localStorage.getItem("filmes") || "[]"); }
+function loadJSON(key, fallback){ try{ const v = localStorage.getItem(key); return v? JSON.parse(v): fallback; }catch(e){ return fallback; } }
+function saveJSON(key, obj){ localStorage.setItem(key, JSON.stringify(obj)); }
 
-function cadastrar() {
-  const user = cadUser.value.trim();
-  const pass = cadPass.value.trim();
-  const msg = msgCadastro;
+let users = loadJSON(LS_USERS, null);
+if(!users){
+  // criar array de usuários e adicionar admin padrão
+  users = [
+    { username:'kaicki', password:'123456', role:'admin', createdAt:Date.now(), email:'' }
+  ];
+  saveJSON(LS_USERS, users);
+}
+let films = loadJSON(LS_FILMS, []);
+let session = loadJSON(LS_SESSION, null);
 
-  if (!user || !pass) return msgErro(msg,"Preencha todos os campos!");
+/* ===========================
+   Elementos
+   =========================== */
+const authBox = document.getElementById('authBox');
+const catalogSection = document.getElementById('catalogSection');
+const catalogEl = document.getElementById('catalogo');
+const userArea = document.getElementById('userArea');
 
-  const usuarios = obterUsuarios();
-  if (usuarios.some(u => u.user === user)) return msgErro(msg,"Usuário já existe!");
+const usernameInput = document.getElementById('usernameInput');
+const passwordInput = document.getElementById('passwordInput');
+const loginBtn = document.getElementById('loginBtn');
+const registerBtn = document.getElementById('registerBtn');
 
-  usuarios.push({ user, pass });
-  salvarUsuarios(usuarios);
-  msgSucesso(msg,"Conta criada!");
-  setTimeout(mostrarLogin, 1500);
+const playerModal = document.getElementById('playerModal');
+const playerFrame = document.getElementById('playerFrame');
+const playerTitle = document.getElementById('playerTitle');
+const closePlayer = document.getElementById('closePlayer');
+
+const adminPanel = document.getElementById('adminPanel');
+const openAdmin = document.getElementById('openAdmin');
+const admModal = document.getElementById('admModal');
+const closeAdmin = document.getElementById('closeAdmin');
+const addFilmBtn = document.getElementById('addFilmBtn');
+const filmTitle = document.getElementById('filmTitle');
+const filmDrive = document.getElementById('filmDrive');
+const filmCover = document.getElementById('filmCover');
+const adminList = document.getElementById('adminList');
+
+const searchInput = document.getElementById('searchInput');
+const sortBtn = document.getElementById('sortBtn');
+
+let ascending = true;
+
+/* ===========================
+   Utilitários
+   =========================== */
+function findUserByNameOrEmail(nameOrEmail){
+  return users.find(u => u.username.toLowerCase() === nameOrEmail.toLowerCase() || (u.email && u.email.toLowerCase() === nameOrEmail.toLowerCase()));
+}
+function showToast(msg){ alert(msg); }
+
+/* Extrai ID do Google Drive (aceita apenas ID, share link ou view link) */
+function extractDriveId(input){
+  if(!input) return null;
+  // se já parece só um ID (apenas letras, números, - _)
+  if(/^[A-Za-z0-9_-]{10,}$/.test(input)) return input;
+  // tentar padrões de link
+  const patterns = [
+    /\/d\/([A-Za-z0-9_-]{10,})/,
+    /id=([A-Za-z0-9_-]{10,})/,
+    /open\?id=([A-Za-z0-9_-]{10,})/
+  ];
+  for(const p of patterns){
+    const m = input.match(p);
+    if(m) return m[1];
+  }
+  // fallback: buscar algo que pareça id
+  const maybe = input.match(/([A-Za-z0-9_-]{10,})/);
+  return maybe ? maybe[1] : null;
 }
 
-function login() {
-  const user = loginUser.value.trim();
-  const pass = loginPass.value.trim();
-  const msg = msgLogin;
-
-  if (user === ADMIN_USER && pass === ADMIN_PASS) {
-    localStorage.setItem("logado", JSON.stringify({ tipo:"admin", nome:user }));
-    mostrarPainel();
+/* ===========================
+   Render catalog & admin list
+   =========================== */
+function renderCatalog(filter=''){
+  catalogEl.innerHTML = '';
+  const list = films
+    .filter(f => f.title.toLowerCase().includes(filter.toLowerCase()))
+    .sort((a,b)=> ascending? a.title.localeCompare(b.title) : b.title.localeCompare(a.title));
+  if(list.length===0){
+    catalogEl.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);text-align:center;padding:40px 0">Nenhum filme encontrado</div>';
     return;
   }
-
-  const usuarios = obterUsuarios();
-  const usuario = usuarios.find(u => u.user===user && u.pass===pass);
-  if (usuario){
-    localStorage.setItem("logado", JSON.stringify({ tipo:"user", nome:user }));
-    mostrarPainel();
-  } else msgErro(msg,"Usuário ou senha incorretos!");
-}
-
-function adicionarFilme(){
-  const nome = nomeFilme.value.trim();
-  const capa = capaFilme.value.trim();
-  const link = linkFilme.value.trim();
-  const msg = msgFilme;
-  if(!nome || !link) return msgErro(msg,"Preencha todos os campos!");
-  const filmes = obterFilmes();
-  filmes.push({ nome, capa, link });
-  salvarFilmes(filmes);
-  msgSucesso(msg,"Filme adicionado!");
-  nomeFilme.value = capaFilme.value = linkFilme.value = "";
-  renderFilmesAdmin();
-}
-
-function renderFilmesAdmin(){
-  const filmes = obterFilmes();
-  const area = filmesAdmin;
-  area.innerHTML = "";
-  filmes.forEach((f, i) => {
-    area.innerHTML += `
-      <div class="filme">
-        <b>${f.nome}</b><br>
-        ${f.capa ? `<img src="${f.capa}" alt="Capa do filme">` : ""}
-        <iframe src="${f.link}" allowfullscreen></iframe>
-        <button onclick="removerFilme(${i})" style="background:#ff4d6d;">Remover</button>
-      </div>`;
+  list.forEach((f, idx) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <img class="thumb" src="${escapeHtml(f.cover||'')}" alt="${escapeHtml(f.title)}" onerror="this.src='https://via.placeholder.com/400x600/21102a/9b59b6?text=SEM+CAPA'"/>
+      <div class="title">${escapeHtml(f.title)}</div>
+      <div class="card-controls">
+        <button class="small" data-idx="${idx}" onclick="openPlayerByIndex(${idx})" style="background:linear-gradient(180deg,var(--accent),#6f2fa3);color:#fff">▶ Assistir</button>
+        <button class="small" onclick="copyDriveLink(${idx})" style="background:transparent;border:1px solid rgba(255,255,255,0.05);color:var(--muted)">Copiar link</button>
+      </div>
+    `;
+    catalogEl.appendChild(card);
   });
-}
-
-function renderFilmesUser(){
-  const filmes = obterFilmes();
-  const area = listaFilmes;
-  if(filmes.length === 0) area.innerHTML = "<p>Nenhum filme disponível.</p>";
-  else area.innerHTML = filmes.map(f => `
-    <div class="filme">
-      <b>${f.nome}</b><br>
-      ${f.capa ? `<img src="${f.capa}" alt="Capa">` : ""}
-      <iframe src="${f.link}" allowfullscreen></iframe>
-    </div>
-  `).join("");
-}
-
-function removerFilme(i){
-  const filmes = obterFilmes();
-  filmes.splice(i,1);
-  salvarFilmes(filmes);
-  renderFilmesAdmin();
-}
-
-function mostrarPainel(){
-  const loginData = JSON.parse(localStorage.getItem("logado"));
-  loginBox.style.display = cadastroBox.style.display = "none";
-  if(loginData.tipo === "admin"){
-    painelAdmin.style.display = "block";
-    nomeAdmin.textContent = loginData.nome;
-    renderFilmesAdmin();
-  } else {
-    painelUser.style.display = "block";
-    renderFilmesUser();
+  // expose global functions for onclick (mobile compat)
+  window.openPlayerByIndex = idx => openPlayer(films[idx]);
+  window.copyDriveLink = idx => {
+    const id = films[idx].driveId;
+    const url = id ? `https://drive.google.com/file/d/${id}/preview` : '';
+    if(url){
+      navigator.clipboard?.writeText(url).then(()=> showToast('Link copiado'));
+    } else showToast('Sem link válido');
   }
 }
 
-function mostrarLogin(){
-  cadastroBox.style.display = painelUser.style.display = painelAdmin.style.display = "none";
-  loginBox.style.display = "block";
+function renderAdminList(){
+  adminList.innerHTML = '';
+  if(films.length===0){ adminList.innerHTML = '<div style="color:var(--muted)">Nenhum filme cadastrado</div>'; return; }
+  const ul = document.createElement('div');
+  ul.style.display='flex'; ul.style.flexDirection='column'; ul.style.gap='8px';
+  films.forEach((f,i)=>{
+    const row = document.createElement('div');
+    row.style.display='flex'; row.style.alignItems='center'; row.style.justifyContent='space-between';
+    row.style.gap='8px';
+    row.innerHTML = `<div style="display:flex;gap:10px;align-items:center"><img src="${escapeHtml(f.cover||'')}" style="width:48px;height:72px;object-fit:cover;border-radius:6px" onerror="this.src='https://via.placeholder.com/80x120/21102a/9b59b6?text=SEM'"/><div style="font-weight:700">${escapeHtml(f.title)}</div></div>
+      <div style="display:flex;gap:8px">
+        <button class="small ghost" onclick="editFilm(${i})">Editar</button>
+        <button class="small" onclick="removeFilm(${i})" style="background:#881d6b">Remover</button>
+      </div>`;
+    ul.appendChild(row);
+  });
+  adminList.appendChild(ul);
+  window.removeFilm = idx => {
+    if(!confirm('Remover filme?')) return;
+    films.splice(idx,1); saveJSON(LS_FILMS, films); renderCatalog(searchInput.value); renderAdminList();
+  }
+  window.editFilm = idx => {
+    const f = films[idx];
+    filmTitle.value = f.title;
+    filmDrive.value = f.driveRaw || '';
+    filmCover.value = f.cover || '';
+    // remove old temporarily
+    if(confirm('Salvará por cima? OK para remover e editar (faça as alterações e clique Adicionar)')){
+      films.splice(idx,1); saveJSON(LS_FILMS, films);
+      renderCatalog(searchInput.value); renderAdminList();
+    }
+  }
 }
 
-function mostrarCadastro(){
-  loginBox.style.display = painelUser.style.display = painelAdmin.style.display = "none";
-  cadastroBox.style.display = "block";
+/* ===========================
+   Player
+   =========================== */
+function openPlayer(f){
+  const id = f.driveId;
+  if(!id){ showToast('Filme sem ID válido'); return; }
+  const url = `https://drive.google.com/file/d/${id}/preview`;
+  playerFrame.src = url;
+  playerTitle.textContent = f.title;
+  playerModal.classList.add('open');
+}
+closePlayer.addEventListener('click', ()=> {
+  playerFrame.src=''; playerModal.classList.remove('open');
+});
+playerModal.addEventListener('click', (e)=>{ if(e.target === playerModal){ playerFrame.src=''; playerModal.classList.remove('open'); } });
+
+/* ===========================
+   Auth (login / register / session)
+   =========================== */
+function showAuth(show){
+  authBox.style.display = show ? 'block' : 'none';
+  catalogSection.style.display = show ? 'none' : 'block';
+}
+function updateUserArea(){
+  if(session){
+    userArea.innerHTML = `<div class="user-badge"><div style="font-weight:700">${escapeHtml(session.username)}</div>
+      <div style="font-size:13px;color:var(--muted)">${escapeHtml(session.role||'user')}</div>
+      <button class="btn ghost" id="logoutBtn">Sair</button>
+    </div>`;
+    document.getElementById('logoutBtn').addEventListener('click', ()=> {
+      session = null; localStorage.removeItem(LS_SESSION); refreshUI();
+    });
+    // admin visibility
+    if(session.role === 'admin') adminPanel.style.display = 'block'; else adminPanel.style.display = 'none';
+  }else{
+    userArea.innerHTML = '';
+    adminPanel.style.display = 'none';
+  }
 }
 
-function logout(){
-  localStorage.removeItem("logado");
-  location.reload();
+loginBtn.addEventListener('click', ()=>{
+  const name = (usernameInput.value||'').trim();
+  const pass = (passwordInput.value||'').trim();
+  if(!name || !pass){ showToast('Preencha usuário e senha'); return; }
+  const u = findUserByNameOrEmail(name);
+  if(!u){ showToast('Usuário não encontrado'); return; }
+  if(u.password !== pass){ showToast('Senha incorreta'); return; }
+  session = { username: u.username, role: u.role||'user' };
+  saveJSON(LS_SESSION, session);
+  refreshUI();
+});
+
+registerBtn.addEventListener('click', ()=>{
+  const name = (usernameInput.value||'').trim();
+  const pass = (passwordInput.value||'').trim();
+  if(!name || !pass){ showToast('Preencha usuário e senha'); return; }
+  if(pass.length < 6){ showToast('Senha precisa ter ao menos 6 caracteres'); return; }
+  if(findUserByNameOrEmail(name)){ showToast('Usuário já existe'); return; }
+  users.push({ username: name, password: pass, role: 'user', createdAt: Date.now(), email: '' });
+  saveJSON(LS_USERS, users);
+  showToast('Conta criada. Agora faça o login.');
+});
+
+/* ===========================
+   Admin add film
+   =========================== */
+addFilmBtn.addEventListener('click', ()=>{
+  const title = (filmTitle.value||'').trim();
+  const driveRaw = (filmDrive.value||'').trim();
+  const cover = (filmCover.value||'').trim();
+  if(!title){ showToast('Informe o título'); return; }
+  if(!driveRaw){ showToast('Informe o ID ou link do Google Drive'); return; }
+  const id = extractDriveId(driveRaw);
+  if(!id){ showToast('Não foi possível extrair o ID do Google Drive'); return; }
+  const newFilm = { title, driveId: id, driveRaw, cover, createdAt: Date.now() };
+  films.unshift(newFilm); saveJSON(LS_FILMS, films);
+  filmTitle.value = ''; filmDrive.value=''; filmCover.value='';
+  renderCatalog(searchInput.value); renderAdminList();
+  showToast('Filme adicionado com sucesso');
+});
+
+/* ===========================
+   Search & sort
+   =========================== */
+searchInput.addEventListener('input', ()=> renderCatalog(searchInput.value));
+sortBtn.addEventListener('click', ()=>{
+  ascending = !ascending;
+  sortBtn.textContent = ascending ? 'Ordenar A-Z' : 'Ordenar Z-A';
+  renderCatalog(searchInput.value);
+});
+
+/* ===========================
+   Admin UI toggles
+   =========================== */
+openAdmin.addEventListener('click', ()=> {
+  admModal.classList.toggle('open');
+  renderAdminList();
+});
+closeAdmin.addEventListener('click', ()=> admModal.classList.remove('open'));
+
+/* ===========================
+   helpers
+   =========================== */
+function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+
+/* ===========================
+   Initial render & session handling
+   =========================== */
+function refreshUI(){
+  // if session exists -> show catalog else show auth
+  const sess = loadJSON(LS_SESSION, null);
+  session = sess;
+  if(session){
+    showAuth(false);
+    updateUserArea();
+    renderCatalog('');
+  }else{
+    showAuth(true);
+    updateUserArea();
+  }
 }
+// initial
+refreshUI();
 
-function msgErro(el,msg){ el.style.color="#ff7b7b"; el.textContent=msg; }
-function msgSucesso(el,msg){ el.style.color="lime"; el.textContent=msg; }
+/* if there are pre-existing films, render */
+renderCatalog('');
+renderAdminList();
 
-window.onload = () => {
-  const loginData = JSON.parse(localStorage.getItem("logado"));
-  if(loginData) mostrarPainel();
-};
+/* make keyboard friendly: press enter to login */
+passwordInput.addEventListener('keypress', (e)=>{ if(e.key === 'Enter') loginBtn.click(); });
+
+/* expose some handy debug (opcional) */
+window._cine = { users, films, session, saveJSON, loadJSON };
+
 </script>
-
 </body>
 </html>
