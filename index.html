@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistema de Login - FilmesHub</title>
+<title>CineHub 💜</title>
 <style>
   body {
     margin: 0;
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #000, #1a1a1a);
+    font-family: "Poppins", Arial, sans-serif;
+    background: linear-gradient(135deg, #2a004f, #120026);
     color: #fff;
     display: flex;
     justify-content: center;
@@ -16,46 +16,76 @@
     height: 100vh;
   }
   .box {
-    background: #111;
+    background: rgba(40, 0, 70, 0.9);
     padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.6);
-    width: 320px;
+    border-radius: 16px;
+    box-shadow: 0 0 25px rgba(150, 50, 255, 0.5);
+    width: 340px;
     text-align: center;
+    backdrop-filter: blur(8px);
   }
-  input {
+  input, textarea {
     width: 90%;
     padding: 10px;
-    margin: 10px 0;
+    margin: 8px 0;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
+    outline: none;
+    background: #33005a;
+    color: #fff;
+  }
+  input::placeholder, textarea::placeholder {
+    color: #bbb;
   }
   button {
     width: 95%;
-    background: #f1c40f;
+    background: linear-gradient(90deg, #8e2de2, #4a00e0);
     border: none;
     padding: 10px;
-    border-radius: 5px;
+    border-radius: 8px;
     font-weight: bold;
+    color: #fff;
     cursor: pointer;
+    transition: 0.3s;
   }
   button:hover {
-    background: #ffda4f;
+    transform: scale(1.05);
+    background: linear-gradient(90deg, #a64bf4, #6b00ff);
   }
-  #painelUser, #painelAdmin, #cadastroBox {
-    display: none;
+  a {
+    color: #c79eff;
+    text-decoration: none;
   }
+  #painelUser, #painelAdmin, #cadastroBox { display: none; }
+  iframe {
+    width: 100%;
+    height: 200px;
+    border-radius: 10px;
+    border: none;
+  }
+  .filme {
+    background: rgba(70, 0, 120, 0.5);
+    padding: 10px;
+    border-radius: 10px;
+    margin: 10px 0;
+    box-shadow: 0 0 10px rgba(150, 50, 255, 0.3);
+  }
+  img {
+    width: 100%;
+    border-radius: 10px;
+  }
+  h2, h3 { color: #d6b0ff; }
 </style>
 </head>
 <body>
 
 <!-- LOGIN -->
 <div class="box" id="loginBox">
-  <h2>Login 🎬</h2>
+  <h2>Login 💜</h2>
   <input type="text" id="loginUser" placeholder="Usuário">
   <input type="password" id="loginPass" placeholder="Senha">
   <button onclick="login()">Entrar</button>
-  <p id="msgLogin" style="color:red;"></p>
+  <p id="msgLogin" style="color:#ff7b7b;"></p>
   <p>Ainda não tem conta? <a href="#" onclick="mostrarCadastro()">Cadastre-se</a></p>
 </div>
 
@@ -71,9 +101,9 @@
 
 <!-- PAINEL USUÁRIO -->
 <div class="box" id="painelUser">
-  <h2>Bem-vindo, <span id="nomeUser"></span> 🍿</h2>
-  <p>Você está logado como usuário.</p>
-  <button onclick="logout()" style="background:#e74c3c;">Sair</button>
+  <h2>🎬 Filmes Disponíveis</h2>
+  <div id="listaFilmes"></div>
+  <button onclick="logout()" style="background:#8e44ad;">Sair</button>
 </div>
 
 <!-- PAINEL ADMIN -->
@@ -81,105 +111,145 @@
   <h2>Painel do Admin 👑</h2>
   <p>Bem-vindo, <span id="nomeAdmin"></span>!</p>
   <hr>
-  <h3>🎥 Gerenciar Filmes</h3>
-  <p>Aqui você pode adicionar links e players futuramente.</p>
-  <button onclick="logout()" style="background:#e74c3c;">Sair</button>
+  <h3>Adicionar Filme 🎞️</h3>
+  <input type="text" id="nomeFilme" placeholder="Título do filme">
+  <input type="text" id="capaFilme" placeholder="URL da capa (opcional)">
+  <textarea id="linkFilme" placeholder="Link do player (iframe/embed)"></textarea>
+  <button onclick="adicionarFilme()">Adicionar</button>
+  <p id="msgFilme" style="color:lime;"></p>
+  <hr>
+  <h3>Filmes adicionados:</h3>
+  <div id="filmesAdmin"></div>
+  <button onclick="logout()" style="background:#8e44ad;">Sair</button>
 </div>
 
 <script>
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "123456";
 
-function salvarUsuarios(usuarios) {
-  localStorage.setItem("usuarios", JSON.stringify(usuarios));
-}
-
-function obterUsuarios() {
-  return JSON.parse(localStorage.getItem("usuarios") || "[]");
-}
+function salvarUsuarios(usuarios){ localStorage.setItem("usuarios", JSON.stringify(usuarios)); }
+function obterUsuarios(){ return JSON.parse(localStorage.getItem("usuarios") || "[]"); }
+function salvarFilmes(filmes){ localStorage.setItem("filmes", JSON.stringify(filmes)); }
+function obterFilmes(){ return JSON.parse(localStorage.getItem("filmes") || "[]"); }
 
 function cadastrar() {
-  const user = document.getElementById("cadUser").value.trim();
-  const pass = document.getElementById("cadPass").value.trim();
-  const msg = document.getElementById("msgCadastro");
+  const user = cadUser.value.trim();
+  const pass = cadPass.value.trim();
+  const msg = msgCadastro;
 
-  if (!user || !pass) {
-    msg.style.color = "red";
-    msg.textContent = "Preencha todos os campos!";
-    return;
-  }
+  if (!user || !pass) return msgErro(msg,"Preencha todos os campos!");
 
   const usuarios = obterUsuarios();
-
-  if (usuarios.some(u => u.user === user)) {
-    msg.style.color = "red";
-    msg.textContent = "Usuário já existe!";
-    return;
-  }
+  if (usuarios.some(u => u.user === user)) return msgErro(msg,"Usuário já existe!");
 
   usuarios.push({ user, pass });
   salvarUsuarios(usuarios);
-
-  msg.style.color = "lime";
-  msg.textContent = "Conta criada com sucesso!";
+  msgSucesso(msg,"Conta criada!");
   setTimeout(mostrarLogin, 1500);
 }
 
 function login() {
-  const user = document.getElementById("loginUser").value.trim();
-  const pass = document.getElementById("loginPass").value.trim();
-  const msg = document.getElementById("msgLogin");
+  const user = loginUser.value.trim();
+  const pass = loginPass.value.trim();
+  const msg = msgLogin;
 
   if (user === ADMIN_USER && pass === ADMIN_PASS) {
-    localStorage.setItem("logado", JSON.stringify({ tipo: "admin", nome: user }));
+    localStorage.setItem("logado", JSON.stringify({ tipo:"admin", nome:user }));
     mostrarPainel();
     return;
   }
 
   const usuarios = obterUsuarios();
-  const usuario = usuarios.find(u => u.user === user && u.pass === pass);
-
-  if (usuario) {
-    localStorage.setItem("logado", JSON.stringify({ tipo: "user", nome: user }));
+  const usuario = usuarios.find(u => u.user===user && u.pass===pass);
+  if (usuario){
+    localStorage.setItem("logado", JSON.stringify({ tipo:"user", nome:user }));
     mostrarPainel();
-  } else {
-    msg.textContent = "Usuário ou senha incorretos!";
-  }
+  } else msgErro(msg,"Usuário ou senha incorretos!");
 }
 
-function mostrarPainel() {
+function adicionarFilme(){
+  const nome = nomeFilme.value.trim();
+  const capa = capaFilme.value.trim();
+  const link = linkFilme.value.trim();
+  const msg = msgFilme;
+  if(!nome || !link) return msgErro(msg,"Preencha todos os campos!");
+  const filmes = obterFilmes();
+  filmes.push({ nome, capa, link });
+  salvarFilmes(filmes);
+  msgSucesso(msg,"Filme adicionado!");
+  nomeFilme.value = capaFilme.value = linkFilme.value = "";
+  renderFilmesAdmin();
+}
+
+function renderFilmesAdmin(){
+  const filmes = obterFilmes();
+  const area = filmesAdmin;
+  area.innerHTML = "";
+  filmes.forEach((f, i) => {
+    area.innerHTML += `
+      <div class="filme">
+        <b>${f.nome}</b><br>
+        ${f.capa ? `<img src="${f.capa}" alt="Capa do filme">` : ""}
+        <iframe src="${f.link}" allowfullscreen></iframe>
+        <button onclick="removerFilme(${i})" style="background:#ff4d6d;">Remover</button>
+      </div>`;
+  });
+}
+
+function renderFilmesUser(){
+  const filmes = obterFilmes();
+  const area = listaFilmes;
+  if(filmes.length === 0) area.innerHTML = "<p>Nenhum filme disponível.</p>";
+  else area.innerHTML = filmes.map(f => `
+    <div class="filme">
+      <b>${f.nome}</b><br>
+      ${f.capa ? `<img src="${f.capa}" alt="Capa">` : ""}
+      <iframe src="${f.link}" allowfullscreen></iframe>
+    </div>
+  `).join("");
+}
+
+function removerFilme(i){
+  const filmes = obterFilmes();
+  filmes.splice(i,1);
+  salvarFilmes(filmes);
+  renderFilmesAdmin();
+}
+
+function mostrarPainel(){
   const loginData = JSON.parse(localStorage.getItem("logado"));
-
-  document.getElementById("loginBox").style.display = "none";
-  document.getElementById("cadastroBox").style.display = "none";
-
-  if (loginData.tipo === "admin") {
-    document.getElementById("painelAdmin").style.display = "block";
-    document.getElementById("nomeAdmin").textContent = loginData.nome;
+  loginBox.style.display = cadastroBox.style.display = "none";
+  if(loginData.tipo === "admin"){
+    painelAdmin.style.display = "block";
+    nomeAdmin.textContent = loginData.nome;
+    renderFilmesAdmin();
   } else {
-    document.getElementById("painelUser").style.display = "block";
-    document.getElementById("nomeUser").textContent = loginData.nome;
+    painelUser.style.display = "block";
+    renderFilmesUser();
   }
 }
 
-function mostrarLogin() {
-  document.getElementById("cadastroBox").style.display = "none";
-  document.getElementById("loginBox").style.display = "block";
+function mostrarLogin(){
+  cadastroBox.style.display = painelUser.style.display = painelAdmin.style.display = "none";
+  loginBox.style.display = "block";
 }
 
-function mostrarCadastro() {
-  document.getElementById("loginBox").style.display = "none";
-  document.getElementById("cadastroBox").style.display = "block";
+function mostrarCadastro(){
+  loginBox.style.display = painelUser.style.display = painelAdmin.style.display = "none";
+  cadastroBox.style.display = "block";
 }
 
-function logout() {
+function logout(){
   localStorage.removeItem("logado");
   location.reload();
 }
 
+function msgErro(el,msg){ el.style.color="#ff7b7b"; el.textContent=msg; }
+function msgSucesso(el,msg){ el.style.color="lime"; el.textContent=msg; }
+
 window.onload = () => {
   const loginData = JSON.parse(localStorage.getItem("logado"));
-  if (loginData) mostrarPainel();
+  if(loginData) mostrarPainel();
 };
 </script>
 
