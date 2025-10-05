@@ -1,342 +1,150 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CinePipoca — Login & ADM</title>
-
-  <!-- Supabase v2 -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PowerCell Filmes</title>
   <style>
-    :root{
-      --bg:#0b0b0b; --card:#141414; --accent:#e50914; --muted:#bdbdbd; --panel:#1a1a1a;
+    body {
+      font-family: Arial, sans-serif;
+      background: #0d0d0d;
+      color: white;
+      text-align: center;
+      margin: 0;
+      padding: 0;
     }
-    @media (prefers-color-scheme: light) {
-      :root { --bg:#f8f8f8; --card:#fff; --panel:#f0f0f0; color-scheme: light; }
+    input, button {
+      margin: 5px;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
     }
-
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Inter, "Segoe UI", Arial; background:var(--bg); color:var(--muted);}
-    header{background:var(--card); padding:12px 18px; display:flex; align-items:center; justify-content:space-between;}
-    header h1{color:var(--accent); margin:0; font-size:1.1rem}
-
-    .wrap{max-width:980px;margin:22px auto;padding:0 16px;}
-    .card{background:var(--card); padding:16px;border-radius:10px; box-shadow: 0 6px 18px rgba(0,0,0,0.25); color:#fff}
-    .center{display:flex; align-items:center; justify-content:center; min-height:60vh}
-    input, textarea, select, button { font-size:14px; }
-    input, textarea, select { width:100%; padding:10px; margin:8px 0; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:#fff }
-    label{font-size:13px; color:var(--muted)}
-    .btn { display:inline-block; padding:10px 14px; border-radius:8px; border:0; cursor:pointer; background:var(--accent); color:#fff; font-weight:600 }
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
-    small.msg{display:block;margin-top:8px;color:var(--muted)}
-    .row{display:flex;gap:10px}
-    .column{flex:1}
-    .movies{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:14px}
-    .movie{background:var(--panel); padding:8px;border-radius:8px;text-align:center;color:#fff}
-    .movie img{width:100%;height:170px;object-fit:cover;border-radius:6px}
-    .admin-panel{margin-top:18px;background:rgba(255,255,255,0.02);padding:12px;border-radius:8px}
-    .hidden{display:none!important}
-    .flex{display:flex;gap:8px;align-items:center}
-    a.link{color:var(--accent); text-decoration:none}
-    footer{padding:20px;text-align:center;color:var(--muted);font-size:13px}
-    @media (max-width:640px){ .movie img{height:140px} }
+    input {
+      width: 250px;
+    }
+    button {
+      cursor: pointer;
+      background-color: #00ffff;
+      color: #000;
+      font-weight: bold;
+    }
+    #painel, #filmes { display: none; margin-top: 20px; }
+    ul { list-style: none; padding: 0; }
+    li { margin: 5px 0; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>CinePipoca</h1>
-    <div id="top-right">
-      <!-- user info will appear here -->
-    </div>
-  </header>
+  <h1>🎬 PowerCell Filmes</h1>
 
-  <main class="wrap">
-    <!-- AUTH CARD -->
-    <section id="auth-card" class="card center">
-      <div style="width:100%;max-width:420px">
-        <h2 style="margin:0 0 8px 0;color:#fff">Acesse seu painel</h2>
-        <label for="email">E-mail</label>
-        <input id="email" type="email" placeholder="seu@email.com" />
-        <label for="password">Senha</label>
-        <input id="password" type="password" placeholder="*****" />
-        <div class="row" style="margin-top:8px">
-          <button id="loginBtn" class="btn column">Entrar</button>
-          <button id="signupBtn" class="btn ghost column">Criar Conta</button>
-        </div>
+  <div id="auth">
+    <input type="email" id="email" placeholder="Seu e-mail"><br>
+    <input type="password" id="senha" placeholder="Sua senha"><br>
+    <button onclick="login()">Entrar</button>
+    <button onclick="cadastro()">Criar conta</button><br>
+    <button onclick="recuperarSenha()">Esqueci minha senha</button>
+    <p id="msg"></p>
+  </div>
 
-        <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
-          <button id="forgotBtn" class="btn ghost" style="width:auto">Esqueci a senha</button>
-          <small style="margin-left:auto" class="msg">Conta admin: <strong>kaickisilva200706@gmail.com</strong></small>
-        </div>
+  <div id="painel">
+    <h2>Painel do Admin</h2>
+    <input type="text" id="titulo" placeholder="Título do filme"><br>
+    <input type="url" id="link" placeholder="Link do filme"><br>
+    <button onclick="adicionarFilme()">Adicionar Filme</button>
+    <button onclick="logout()">Sair</button>
+    <p id="painelMsg"></p>
+  </div>
 
-        <small id="authMsg" class="msg"></small>
-      </div>
-    </section>
+  <div id="filmes">
+    <h2>Filmes disponíveis</h2>
+    <ul id="lista"></ul>
+    <button onclick="logout()">Sair</button>
+  </div>
 
-    <!-- APP (apenas visível quando logado) -->
-    <section id="app" class="hidden">
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-          <div>
-            <h2 style="margin:0">Filmes</h2>
-            <small class="msg">Somente usuários autenticados veem esta lista.</small>
-          </div>
-
-          <div class="flex" id="userControls">
-            <div id="userEmail" style="color:#fff; font-weight:600"></div>
-            <button id="openAdminBtn" class="btn ghost hidden">Painel ADM</button>
-            <button id="logoutBtn" class="btn">Sair</button>
-          </div>
-        </div>
-
-        <div style="margin-top:12px">
-          <label for="filter">Pesquisar</label>
-          <input id="filter" placeholder="Pesquisar por título..." />
-        </div>
-
-        <div id="moviesContainer" class="movies" style="margin-top:12px"></div>
-      </div>
-
-      <!-- Admin panel -->
-      <div id="adminPanel" class="admin-panel card hidden" style="margin-top:12px">
-        <h3 style="margin-top:0;color:var(--accent)">Painel Administrativo</h3>
-
-        <label>Título</label>
-        <input id="movieTitle" placeholder="Título do filme" />
-        <label>URL da imagem (opcional)</label>
-        <input id="movieImage" placeholder="https://..." />
-        <label>URL do player (link ou iframe src)</label>
-        <input id="moviePlayer" placeholder="https://... ou id do Drive" />
-        <div class="row" style="margin-top:8px">
-          <button id="addMovieBtn" class="btn column">Salvar Filme</button>
-          <button id="closeAdminBtn" class="btn ghost column">Fechar</button>
-        </div>
-
-        <small id="adminMsg" class="msg"></small>
-      </div>
-    </section>
-  </main>
-
-  <footer>© CinePipoca • Desenvolvido com Supabase</footer>
-
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script>
-    // ---------- CONFIG (use seus dados) ----------
-    const SUPABASE_URL = "https://ufzaejihymezkmqehgfh.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmemFlamloeW1lemttcWVoZ2ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2ODk3NzcsImV4cCI6MjA3NTI2NTc3N30.NaxHwq_Eb9BAhbNvPmgme5YNb4V2dawBB2fEpfXwzdQ";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabaseUrl = "https://ufzaejihymezkmqehgfh.supabase.co";
+    const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmemFlamloeW1lemttcWVoZ2ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2ODk3NzcsImV4cCI6MjA3NTI2NTc3N30.NaxHwq_Eb9BAhbNvPmgme5YNb4V2dawBB2fEpfXwzdQ";
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
 
-    // ---------- UI elements ----------
-    const authCard = document.getElementById('auth-card');
-    const appSection = document.getElementById('app');
-    const adminPanel = document.getElementById('adminPanel');
-    const loginBtn = document.getElementById('loginBtn');
-    const signupBtn = document.getElementById('signupBtn');
-    const forgotBtn = document.getElementById('forgotBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const openAdminBtn = document.getElementById('openAdminBtn');
-    const closeAdminBtn = document.getElementById('closeAdminBtn');
-    const addMovieBtn = document.getElementById('addMovieBtn');
-    const authMsg = document.getElementById('authMsg');
-    const adminMsg = document.getElementById('adminMsg');
-    const userEmailEl = document.getElementById('userEmail');
-    const moviesContainer = document.getElementById('moviesContainer');
-    const filterInput = document.getElementById('filter');
+    const msg = document.getElementById("msg");
+    const auth = document.getElementById("auth");
+    const painel = document.getElementById("painel");
+    const filmesDiv = document.getElementById("filmes");
+    const lista = document.getElementById("lista");
 
-    // inputs
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const movieTitleInput = document.getElementById('movieTitle');
-    const movieImageInput = document.getElementById('movieImage');
-    const moviePlayerInput = document.getElementById('moviePlayer');
+    async function login() {
+      const email = document.getElementById("email").value.trim();
+      const senha = document.getElementById("senha").value.trim();
+      msg.textContent = "Entrando...";
 
-    // admin email fallback (in case admins table isn't set yet)
-    const FALLBACK_ADMIN_EMAIL = 'kaickisilva200706@gmail.com';
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
 
-    // ---------- Helpers ----------
-    function showAuth(message='', error=false){
-      authMsg.textContent = message || '';
-      authMsg.style.color = error ? '#ff8b8b' : 'var(--muted)';
-    }
-
-    function showAdminMsg(msg='', error=false){
-      adminMsg.textContent = msg || '';
-      adminMsg.style.color = error ? '#ff8b8b' : 'var(--muted)';
-    }
-
-    function showToast(msg){
-      alert(msg);
-    }
-
-    // ---------- Auth actions ----------
-    loginBtn.addEventListener('click', async () => {
-      showAuth('Entrando...');
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-      if(!email || !password){ showAuth('Preencha e-mail e senha', true); return; }
-
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) showAuth('Erro: ' + error.message, true);
-      else {
-        showAuth('Logado com sucesso');
-        await initializeAfterLogin();
+      if (error) {
+        msg.textContent = "❌ Erro: " + error.message;
+      } else {
+        msg.textContent = "✅ Login bem-sucedido!";
+        checarAdmin(email);
       }
-    });
+    }
 
-    signupBtn.addEventListener('click', async () => {
-      showAuth('Criando conta...');
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-      if(!email || !password){ showAuth('Preencha e-mail e senha', true); return; }
+    async function cadastro() {
+      const email = document.getElementById("email").value.trim();
+      const senha = document.getElementById("senha").value.trim();
+      msg.textContent = "Criando conta...";
 
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) showAuth('Erro: ' + error.message, true);
-      else {
-        showAuth('Conta criada! Verifique seu e-mail para confirmar (se aplicável).');
+      const { data, error } = await supabase.auth.signUp({ email, password: senha });
+
+      if (error) {
+        msg.textContent = "❌ " + error.message;
+      } else {
+        msg.textContent = "✅ Conta criada! Verifique seu e-mail.";
       }
-    });
+    }
 
-    forgotBtn.addEventListener('click', async () => {
-      const email = prompt('Digite seu e-mail para receber o link de recuperação:');
-      if(!email) return;
-      showAuth('Enviando e-mail de recuperação...');
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: location.href });
-      if (error) showAuth('Erro: ' + error.message, true);
-      else showAuth('E-mail enviado! Verifique sua caixa de entrada.');
-    });
+    async function recuperarSenha() {
+      const email = document.getElementById("email").value.trim();
+      if (!email) return msg.textContent = "Digite seu e-mail primeiro!";
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
+      msg.textContent = error ? "Erro: " + error.message : "E-mail de redefinição enviado!";
+    }
 
-    logoutBtn.addEventListener('click', async () => {
+    async function checarAdmin(email) {
+      auth.style.display = "none";
+      const { data, error } = await supabase.from("admins").select("*").eq("email", email.toLowerCase());
+      if (data && data.length > 0) {
+        painel.style.display = "block";
+      }
+      filmesDiv.style.display = "block";
+      carregarFilmes();
+    }
+
+    async function adicionarFilme() {
+      const titulo = document.getElementById("titulo").value;
+      const link = document.getElementById("link").value;
+      const { error } = await supabase.from("filmes").insert([{ titulo, link }]);
+      document.getElementById("painelMsg").textContent = error ? "Erro: " + error.message : "✅ Filme adicionado!";
+      carregarFilmes();
+    }
+
+    async function carregarFilmes() {
+      const { data, error } = await supabase.from("filmes").select("*");
+      lista.innerHTML = "";
+      if (data) {
+        data.forEach(f => {
+          const li = document.createElement("li");
+          li.innerHTML = `<a href="${f.link}" target="_blank" style="color:#0ff">${f.titulo}</a>`;
+          lista.appendChild(li);
+        });
+      }
+    }
+
+    async function logout() {
       await supabase.auth.signOut();
-      showSignedOutUI();
-    });
-
-    // ---------- Admin panel handlers ----------
-    openAdminBtn.addEventListener('click', () => {
-      adminPanel.classList.remove('hidden');
-      adminPanel.scrollIntoView({behavior:'smooth'});
-    });
-    closeAdminBtn.addEventListener('click', () => adminPanel.classList.add('hidden'));
-
-    addMovieBtn.addEventListener('click', async () => {
-      const titulo = movieTitleInput.value.trim();
-      const imagem = movieImageInput.value.trim();
-      const player_url = moviePlayerInput.value.trim();
-
-      if(!titulo || !player_url){
-        showAdminMsg('Título e link do player são obrigatórios.', true);
-        return;
-      }
-      showAdminMsg('Salvando...');
-      const { error } = await supabase.from('filmes').insert([{ titulo, imagem, player_url }]);
-      if(error) showAdminMsg('Erro: ' + error.message, true);
-      else {
-        showAdminMsg('Filme salvo com sucesso!');
-        movieTitleInput.value = movieImageInput.value = moviePlayerInput.value = '';
-        await loadMovies();
-        adminPanel.classList.add('hidden');
-      }
-    });
-
-    // ---------- Movies ----------
-    async function loadMovies(){
-      moviesContainer.innerHTML = '<small class="msg">Carregando filmes...</small>';
-      const { data, error } = await supabase.from('filmes').select('*').order('id',{ascending:false});
-      if(error){
-        moviesContainer.innerHTML = `<small class="msg">Erro ao carregar: ${error.message}</small>`;
-        return;
-      }
-      if(!data || data.length === 0){
-        moviesContainer.innerHTML = '<small class="msg">Nenhum filme cadastrado.</small>';
-        return;
-      }
-
-      moviesContainer.innerHTML = '';
-      data.forEach(f => {
-        const div = document.createElement('div');
-        div.className = 'movie';
-        div.innerHTML = `
-          <img src="${f.imagem || 'https://via.placeholder.com/400x225?text=Sem+Capa'}" alt="${escapeHtml(f.titulo)}" />
-          <div style="padding:6px 0">
-            <strong style="color:#fff">${escapeHtml(f.titulo)}</strong><br>
-            <a class="link" href="${escapeAttr(f.player_url)}" target="_blank" rel="noopener">Assistir ▶</a>
-          </div>
-        `;
-        moviesContainer.appendChild(div);
-      });
+      painel.style.display = "none";
+      filmesDiv.style.display = "none";
+      auth.style.display = "block";
+      msg.textContent = "Você saiu da conta.";
     }
-
-    // ---------- Auth state & UI ----------
-    async function initializeAfterLogin(){
-      // get current user
-      const { data } = await supabase.auth.getUser();
-      const user = data.user;
-      if(!user){ showAuth('Não foi possível obter usuário.', true); return; }
-
-      // show app UI
-      authCard.classList.add('hidden');
-      appSection.classList.remove('hidden');
-      userEmailEl.textContent = user.email;
-
-      // check admins table
-      let isAdmin = false;
-      try{
-        const res = await supabase.from('admins').select('email').eq('email', user.email).maybeSingle();
-        if(res && res.data && res.data.email) isAdmin = true;
-      }catch(e){
-        // ignore, will fallback
-      }
-      // fallback check (in case admins table not yet created)
-      if(user.email === FALLBACK_ADMIN_EMAIL) isAdmin = true;
-
-      if(isAdmin){
-        openAdminBtn.classList.remove('hidden');
-      } else {
-        openAdminBtn.classList.add('hidden');
-      }
-
-      await loadMovies();
-    }
-
-    function showSignedOutUI(){
-      authCard.classList.remove('hidden');
-      appSection.classList.add('hidden');
-      userEmailEl.textContent = '';
-      showAuth('');
-    }
-
-    // initial check on load
-    (async function init(){
-      // handle auth state changes (keeps UI in sync)
-      supabase.auth.onAuthStateChange((_event, session) => {
-        if(session && session.access_token){
-          initializeAfterLogin();
-        } else {
-          showSignedOutUI();
-        }
-      });
-
-      // attempt to see if already logged in
-      const { data } = await supabase.auth.getSession();
-      if(data && data.session && data.session.user){
-        await initializeAfterLogin();
-      } else {
-        showSignedOutUI();
-      }
-    })();
-
-    // search/filter
-    filterInput.addEventListener('input', () => {
-      const q = filterInput.value.toLowerCase().trim();
-      document.querySelectorAll('.movie').forEach(card => {
-        const title = card.querySelector('strong').textContent.toLowerCase();
-        card.style.display = title.includes(q) ? '' : 'none';
-      });
-    });
-
-    // small helpers
-    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-    function escapeAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
-
   </script>
 </body>
 </html>
