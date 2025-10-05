@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CineLogin - Sistema de Acesso</title>
+  <title>CineLogin - Painel ADM</title>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
     body {
@@ -30,7 +30,7 @@
       text-align: center;
     }
 
-    input {
+    input, textarea {
       width: 100%;
       padding: 10px;
       margin: 8px 0;
@@ -60,12 +60,6 @@
       display: none;
     }
 
-    /* Área interna */
-    #home {
-      display: none;
-      padding: 20px;
-    }
-
     header {
       background: #111;
       padding: 15px;
@@ -84,6 +78,7 @@
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 15px;
       margin-top: 20px;
+      padding: 20px;
     }
 
     .movie {
@@ -97,13 +92,23 @@
       width: 100%;
       border-radius: 8px;
     }
+
+    #admin-panel {
+      display: none;
+      padding: 20px;
+      background: #1a1a1a;
+    }
+
+    #admin-panel h2 {
+      color: #e50914;
+    }
   </style>
 </head>
 <body>
-  <!-- Login / Cadastro -->
+  <!-- Login -->
   <div class="center" id="auth-area">
     <div class="card">
-      <h2 id="form-title">Acesso ao CineLogin</h2>
+      <h2>Acesso ao CineLogin</h2>
       <input type="email" id="email" placeholder="Email" required />
       <input type="password" id="password" placeholder="Senha" required />
       <button id="login-btn">Entrar</button>
@@ -112,36 +117,35 @@
   </div>
 
   <!-- Área interna -->
-  <div id="home">
+  <div id="home" class="hidden">
     <header>
       <h1>CineLogin</h1>
       <div>
         <span id="user-email"></span>
-        <button id="logout-btn" style="background:#444; padding:6px 10px; font-size:0.9em;">Sair</button>
+        <button id="logout-btn" style="background:#444; padding:6px 10px;">Sair</button>
       </div>
     </header>
 
-    <h2>Filmes disponíveis 🎬</h2>
-    <div class="movies">
-      <div class="movie">
-        <img src="https://m.media-amazon.com/images/I/81xTx-LzUzL._AC_SL1500_.jpg" alt="Filme 1">
-        <p>Matrix</p>
-      </div>
-      <div class="movie">
-        <img src="https://m.media-amazon.com/images/I/91bYsX41DVL._AC_SL1500_.jpg" alt="Filme 2">
-        <p>Vingadores</p>
-      </div>
-      <div class="movie">
-        <img src="https://m.media-amazon.com/images/I/71niXI3lxlL._AC_SL1188_.jpg" alt="Filme 3">
-        <p>Interestelar</p>
-      </div>
+    <div style="padding:20px;">
+      <h2>Filmes disponíveis 🎬</h2>
+      <div class="movies" id="movie-list"></div>
+      <button id="open-admin" style="display:none; margin-top:20px;">Painel do Admin</button>
     </div>
+  </div>
+
+  <!-- Painel Admin -->
+  <div id="admin-panel">
+    <h2>Adicionar Novo Filme</h2>
+    <input type="text" id="titulo" placeholder="Título do filme" />
+    <input type="text" id="imagem" placeholder="URL da imagem (opcional)" />
+    <input type="text" id="player_url" placeholder="Link do player (iframe ou URL)" />
+    <button id="add-movie-btn">Salvar Filme</button>
+    <button id="close-admin" style="background:#444; margin-top:10px;">Fechar Painel</button>
   </div>
 
   <script>
     const SUPABASE_URL = "https://ufzaejihymezkmqehgfh.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmemFlamloeW1lemttcWVoZ2ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2ODk3NzcsImV4cCI6MjA3NTI2NTc3N30.NaxHwq_Eb9BAhbNvPmgme5YNb4V2dawBB2fEpfXwzdQ";
-
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const emailInput = document.getElementById("email");
@@ -152,6 +156,11 @@
     const userEmail = document.getElementById("user-email");
     const authArea = document.getElementById("auth-area");
     const home = document.getElementById("home");
+    const movieList = document.getElementById("movie-list");
+    const openAdmin = document.getElementById("open-admin");
+    const adminPanel = document.getElementById("admin-panel");
+    const closeAdmin = document.getElementById("close-admin");
+    const addMovieBtn = document.getElementById("add-movie-btn");
 
     // Login
     loginBtn.addEventListener("click", async () => {
@@ -179,22 +188,79 @@
       updateUI(null);
     });
 
+    // Checa usuário logado
     async function checkUser() {
       const { data } = await client.auth.getUser();
       updateUI(data.user);
     }
 
-    function updateUI(user) {
+    // Atualiza interface
+    async function updateUI(user) {
       if (user) {
-        authArea.style.display = "none";
-        home.style.display = "block";
+        authArea.classList.add("hidden");
+        home.classList.remove("hidden");
         userEmail.textContent = user.email;
+
+        loadMovies();
+
+        // Checa se é admin
+        const { data: adminData } = await client.from("admins").select("email").eq("email", user.email).maybeSingle();
+        if (adminData) {
+          openAdmin.style.display = "block";
+        } else {
+          openAdmin.style.display = "none";
+        }
+
       } else {
-        authArea.style.display = "flex";
-        home.style.display = "none";
+        authArea.classList.remove("hidden");
+        home.classList.add("hidden");
       }
     }
 
+    // Carrega filmes
+    async function loadMovies() {
+      const { data: filmes } = await client.from("filmes").select("*").order("id", { ascending: false });
+      movieList.innerHTML = "";
+      filmes.forEach(f => {
+        const div = document.createElement("div");
+        div.className = "movie";
+        div.innerHTML = `
+          <img src="${f.imagem || "https://via.placeholder.com/150"}" alt="${f.titulo}">
+          <p>${f.titulo}</p>
+          <a href="${f.player_url}" target="_blank" style="color:#e50914;">Assistir ▶️</a>
+        `;
+        movieList.appendChild(div);
+      });
+    }
+
+    // Painel admin
+    openAdmin.addEventListener("click", () => {
+      adminPanel.style.display = "block";
+    });
+
+    closeAdmin.addEventListener("click", () => {
+      adminPanel.style.display = "none";
+    });
+
+    addMovieBtn.addEventListener("click", async () => {
+      const titulo = document.getElementById("titulo").value;
+      const imagem = document.getElementById("imagem").value;
+      const player_url = document.getElementById("player_url").value;
+      if (!titulo || !player_url) {
+        alert("Preencha pelo menos o título e o link!");
+        return;
+      }
+
+      const { error } = await client.from("filmes").insert([{ titulo, imagem, player_url }]);
+      if (error) alert("Erro ao salvar: " + error.message);
+      else {
+        alert("Filme adicionado com sucesso!");
+        adminPanel.style.display = "none";
+        loadMovies();
+      }
+    });
+
+    // Inicia
     checkUser();
   </script>
 </body>
