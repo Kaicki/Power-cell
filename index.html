@@ -3,152 +3,108 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel de Filmes</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Painel de Admin - CineLogin</title>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #111;
-      color: white;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
       margin: 0;
-      padding: 0;
     }
     .container {
+      width: 90%;
       max-width: 400px;
-      margin: 80px auto;
       background: #222;
       padding: 20px;
-      border-radius: 10px;
-      text-align: center;
+      border-radius: 12px;
+      box-shadow: 0 0 10px #000;
     }
+    h2 { text-align: center; margin-bottom: 20px; }
     input {
-      width: 90%;
-      padding: 10px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 5px;
+      width: 100%; padding: 10px; margin: 10px 0;
+      border: none; border-radius: 8px; outline: none;
     }
     button {
-      width: 95%;
-      padding: 10px;
-      background: #28a745;
-      border: none;
-      border-radius: 5px;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
+      width: 100%; padding: 10px;
+      background: #ffcc00; color: #000;
+      border: none; border-radius: 8px; font-weight: bold;
+      cursor: pointer; transition: 0.3s;
     }
-    button:hover {
-      background: #218838;
-    }
-    iframe {
-      width: 100%;
-      height: 400px;
-      border: none;
-      margin-top: 20px;
-    }
+    button:hover { background: #ffdb4d; }
     #painel {
       display: none;
-      padding: 20px;
       text-align: center;
     }
-    .logout {
-      background: #dc3545;
-    }
-    .logout:hover {
-      background: #c82333;
+    #logout {
+      background: #f33;
+      color: #fff;
+      margin-top: 15px;
     }
   </style>
 </head>
 <body>
-  <div class="container" id="loginBox">
+  <div class="container" id="login">
     <h2>Login do Administrador</h2>
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="senha" placeholder="Senha" />
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="senha" placeholder="Senha">
     <button id="btnLogin">Entrar</button>
-    <p id="msg" style="color:red;"></p>
   </div>
 
-  <div id="painel">
-    <h2>Painel de Administração 🎬</h2>
-    <p>Bem-vindo, <span id="usuarioEmail"></span>!</p>
-
-    <h3>Player de Filme (Google Drive)</h3>
-    <input type="text" id="driveLink" placeholder="Cole o link do Google Drive aqui" style="width:90%;padding:10px;">
-    <button onclick="carregarFilme()">Carregar Filme</button>
-
-    <div id="playerBox">
-      <iframe id="player" src=""></iframe>
-    </div>
-
-    <button class="logout" onclick="logout()">Sair</button>
+  <div class="container" id="painel">
+    <h2>Painel do Administrador</h2>
+    <p>Bem-vindo, <span id="adminEmail"></span>!</p>
+    <button id="logout">Sair</button>
   </div>
 
   <script>
-    // === CONFIGURAÇÃO SUPABASE ===
-    const SUPABASE_URL = "https://robypvvfbzafjzccvslt.supabase.co"; // ⚠️ substitua se for outro projeto
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvYnlicHZ2ZmJ6YWZqemNjdnNsdCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzU2ODkzNzA3LCJleHAiOjIwNzI0Njk3MDd9.e7eH8AfeUw7W2OjeLLFYFJvNRp03N7oqfVgRMyucVrI";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const SUPABASE_URL = "https://SEU-PROJETO.supabase.co";
+    const SUPABASE_ANON_KEY = "SUA_CHAVE_ANON";
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // === LOGIN ===
-    document.getElementById("btnLogin").addEventListener("click", async () => {
-      const email = document.getElementById("email").value;
-      const senha = document.getElementById("senha").value;
-      const msg = document.getElementById("msg");
+    const btnLogin = document.getElementById("btnLogin");
+    const painel = document.getElementById("painel");
+    const login = document.getElementById("login");
+    const adminEmail = document.getElementById("adminEmail");
+    const logout = document.getElementById("logout");
+
+    btnLogin.addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      const senha = document.getElementById("senha").value.trim();
+
+      if (!email || !senha) {
+        alert("Preencha todos os campos!");
+        return;
+      }
 
       const { data, error } = await supabase
-        .from("Adm")
+        .from("adm")
         .select("*")
-        .eq("Email", email)
-        .eq("Senha", senha)
-        .single();
+        .eq("email", email)
+        .eq("senha", senha);
 
-      if (error || !data) {
-        msg.textContent = "Email ou senha incorretos!";
+      if (error) {
+        alert("Erro ao conectar: " + error.message);
+        return;
+      }
+
+      if (data.length > 0) {
+        login.style.display = "none";
+        painel.style.display = "block";
+        adminEmail.textContent = email;
       } else {
-        msg.textContent = "";
-        localStorage.setItem("admin", email);
-        mostrarPainel(email);
+        alert("Email ou senha incorretos!");
       }
     });
 
-    // === MOSTRAR PAINEL ===
-    function mostrarPainel(email) {
-      document.getElementById("loginBox").style.display = "none";
-      document.getElementById("painel").style.display = "block";
-      document.getElementById("usuarioEmail").textContent = email;
-    }
-
-    // === LOGOUT ===
-    function logout() {
-      localStorage.removeItem("admin");
-      location.reload();
-    }
-
-    // === RECARREGAR LOGIN SALVO ===
-    window.onload = () => {
-      const admin = localStorage.getItem("admin");
-      if (admin) mostrarPainel(admin);
-    };
-
-    // === PLAYER GOOGLE DRIVE ===
-    function carregarFilme() {
-      const link = document.getElementById("driveLink").value;
-      const player = document.getElementById("player");
-
-      if (!link.includes("drive.google.com")) {
-        alert("Cole um link válido do Google Drive!");
-        return;
-      }
-
-      const fileId = link.match(/[-\w]{25,}/);
-      if (!fileId) {
-        alert("Link inválido!");
-        return;
-      }
-
-      player.src = `https://drive.google.com/file/d/${fileId[0]}/preview`;
-    }
+    logout.addEventListener("click", () => {
+      painel.style.display = "none";
+      login.style.display = "block";
+    });
   </script>
 </body>
 </html>
