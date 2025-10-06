@@ -124,7 +124,7 @@
     const painel = document.getElementById("painelAdmin");
 
     if (!user) {
-      window.location.href = "login.html";
+      window.location.href = "index.html";
     }
 
     if (user.isAdmin) {
@@ -133,7 +133,7 @@
 
     document.getElementById("logout").onclick = () => {
       localStorage.removeItem("user");
-      window.location.href = "login.html";
+      window.location.href = "index.html";
     };
 
     function carregarFilmes() {
