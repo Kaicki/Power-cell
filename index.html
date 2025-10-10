@@ -1,116 +1,92 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CinePower - Login</title>
-<style>
-  body { background:#111; color:#fff; font-family: Arial, sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; }
-  #loginPanel { background:#222; padding:30px; border-radius:12px; width:320px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-  h2 { text-align:center; margin-bottom:20px; }
-  input, select, button { width:100%; margin:8px 0; padding:10px; border-radius:6px; border:none; }
-  button { background:#28a745; color:#fff; font-weight:bold; cursor:pointer; }
-  .link { color:#0af; cursor:pointer; font-size:14px; text-align:center; margin-top:5px; }
-  .error { color:#ff5555; text-align:center; margin-top:10px; font-size:14px; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Powercine - Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial; background: #111; color: #fff; text-align:center; padding:50px; }
+    input, button { padding:10px; margin:5px; border-radius:5px; border:none; }
+    #catalogo { display:none; margin-top:30px; }
+    .filme { display:inline-block; margin:10px; }
+    .filme img { width:150px; border-radius:8px; }
+  </style>
 </head>
 <body>
+  <h1>Powercine</h1>
 
-<div id="loginPanel">
-  <h2>CinePower</h2>
-
-  <!-- LOGIN -->
-  <div id="loginForm">
-    <input type="email" id="emailLogin" placeholder="Email">
-    <input type="password" id="senhaLogin" placeholder="Senha">
-    <button onclick="login()">Entrar</button>
-    <p class="link" onclick="toggleForm()">Registrar-se</p>
+  <div id="loginDiv">
+    <input type="email" id="email" placeholder="Email"><br>
+    <input type="password" id="senha" placeholder="Senha"><br>
+    <button onclick="login()">Login</button>
+    <button onclick="registrar()">Registrar</button>
+    <p id="msg"></p>
   </div>
 
-  <!-- REGISTRO -->
-  <div id="signupForm" style="display:none;">
-    <input type="email" id="emailSignup" placeholder="Email">
-    <input type="password" id="senhaSignup" placeholder="Senha">
-    <select id="roleSignup">
-      <option value="user">Usuário</option>
-      <option value="admin">Admin</option>
-    </select>
-    <button onclick="signup()">Cadastrar</button>
-    <p class="link" onclick="toggleForm()">Voltar ao login</p>
+  <div id="catalogo">
+    <h2>Catálogo de Filmes</h2>
+    <div id="filmes"></div>
+    <button onclick="logout()">Sair</button>
   </div>
 
-  <p class="error" id="msgErro"></p>
-</div>
+  <script>
+    // === Conectar Supabase ===
+    const supabaseUrl = 'SUA_SUPABASE_URL';
+    const supabaseKey = 'SUA_CHAVE_PUBLICA';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"></script>
-
-<script>
-  // CONFIGURAÇÃO FIREBASE
-  const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "seu-projeto.firebaseapp.com",
-    projectId: "seu-projeto",
-    storageBucket: "seu-projeto.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdef"
-  };
-
-  const app = firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-
-  const msgErro = document.getElementById("msgErro");
-  const loginForm = document.getElementById("loginForm");
-  const signupForm = document.getElementById("signupForm");
-
-  function toggleForm(){
-    if(loginForm.style.display === "none"){
-      loginForm.style.display = "block";
-      signupForm.style.display = "none";
-    } else {
-      loginForm.style.display = "none";
-      signupForm.style.display = "block";
+    // === Registrar usuário ===
+    async function registrar() {
+      const email = document.getElementById('email').value;
+      const senha = document.getElementById('senha').value;
+      const { data, error } = await supabase.auth.signUp({ email, password: senha });
+      if (error) document.getElementById('msg').innerText = error.message;
+      else document.getElementById('msg').innerText = 'Registrado! Verifique seu email.';
     }
-    msgErro.textContent = "";
-  }
 
-  // Redirecionar se já logado
-  auth.onAuthStateChanged(user => {
-    if(user){
-      window.location.href = "catalogo.html";
+    // === Login ===
+    async function login() {
+      const email = document.getElementById('email').value;
+      const senha = document.getElementById('senha').value;
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
+      if (error) document.getElementById('msg').innerText = error.message;
+      else carregarCatalogo();
     }
-  });
 
-  async function login() {
-    const email = document.getElementById("emailLogin").value.trim();
-    const senha = document.getElementById("senhaLogin").value.trim();
-    msgErro.textContent = "";
-    if(!email || !senha) return msgErro.textContent = "Preencha email e senha!";
-    try {
-      await auth.signInWithEmailAndPassword(email, senha);
-      window.location.href = "catalogo.html";
-    } catch(err) { msgErro.textContent = err.message; }
-  }
+    // === Logout ===
+    async function logout() {
+      await supabase.auth.signOut();
+      document.getElementById('catalogo').style.display = 'none';
+      document.getElementById('loginDiv').style.display = 'block';
+    }
 
-  async function signup() {
-    const email = document.getElementById("emailSignup").value.trim();
-    const senha = document.getElementById("senhaSignup").value.trim();
-    const role = document.getElementById("roleSignup").value;
-    msgErro.textContent = "";
-    if(!email || !senha) return msgErro.textContent = "Preencha email e senha!";
-    try {
-      const userCredential = await auth.createUserWithEmailAndPassword(email, senha);
-      await db.collection("usuarios").doc(userCredential.user.uid).set({email, role});
-      alert("Cadastro realizado com sucesso!");
-      toggleForm(); // volta ao login
-      document.getElementById("emailSignup").value="";
-      document.getElementById("senhaSignup").value="";
-    } catch(err) { msgErro.textContent = err.message; }
-  }
-</script>
+    // === Carregar catálogo ===
+    async function carregarCatalogo() {
+      document.getElementById('loginDiv').style.display = 'none';
+      document.getElementById('catalogo').style.display = 'block';
 
+      // pegar filmes do Supabase
+      let { data: filmes, error } = await supabase.from('filmes').select('*');
+      if (error) {
+        document.getElementById('filmes').innerText = 'Erro ao carregar filmes';
+        return;
+      }
+
+      const container = document.getElementById('filmes');
+      container.innerHTML = '';
+      filmes.forEach(f => {
+        const div = document.createElement('div');
+        div.className = 'filme';
+        div.innerHTML = `<img src="${f.capa}" alt="${f.titulo}"><br>${f.titulo}`;
+        container.appendChild(div);
+      });
+    }
+
+    // Verificar se usuário já está logado
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) carregarCatalogo();
+    });
+  </script>
 </body>
 </html>
