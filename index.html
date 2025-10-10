@@ -6,16 +6,53 @@
   <title>Powercine - Login</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: Arial; background: #111; color: #fff; text-align:center; padding:50px; }
-    input, button { padding:10px; margin:5px; border-radius:5px; border:none; }
-    #catalogo { display:none; margin-top:30px; }
-    .filme { display:inline-block; margin:10px; }
-    .filme img { width:150px; border-radius:8px; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      text-align: center;
+      padding: 50px;
+    }
+
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    #catalogo {
+      display: none;
+      margin-top: 30px;
+    }
+
+    .filme {
+      display: inline-block;
+      margin: 10px;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .filme img {
+      width: 150px;
+      border-radius: 8px;
+    }
+
+    .filme:hover {
+      transform: scale(1.1);
+    }
+
+    #msg {
+      margin-top: 10px;
+      color: #ff6666;
+    }
   </style>
 </head>
 <body>
+
   <h1>Powercine</h1>
 
+  <!-- LOGIN / REGISTRO -->
   <div id="loginDiv">
     <input type="email" id="email" placeholder="Email"><br>
     <input type="password" id="senha" placeholder="Senha"><br>
@@ -24,6 +61,7 @@
     <p id="msg"></p>
   </div>
 
+  <!-- CATÁLOGO -->
   <div id="catalogo">
     <h2>Catálogo de Filmes</h2>
     <div id="filmes"></div>
@@ -31,50 +69,63 @@
   </div>
 
   <script>
-    // === Conectar Supabase ===
+    // === Configuração Supabase ===
     const supabaseUrl = 'https://bbbhatsqjnrjfbhkwrcp.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiYmhhdHNxam5yamZiaGt3cmNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxMTMxOTYsImV4cCI6MjA3NTY4OTE5Nn0.KxPfc0SLkALTFsayNWm3_zAUEdBQwMlNlHUYZlcU7FU';
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // === Registrar usuário ===
+    // === Função Registrar Usuário ===
     async function registrar() {
       const email = document.getElementById('email').value;
       const senha = document.getElementById('senha').value;
+
       const { data, error } = await supabase.auth.signUp({ email, password: senha });
-      if (error) document.getElementById('msg').innerText = error.message;
-      else document.getElementById('msg').innerText = 'Registrado! Verifique seu email.';
+
+      if (error) {
+        document.getElementById('msg').innerText = error.message;
+      } else {
+        document.getElementById('msg').innerText = 'Registrado! Verifique seu email.';
+      }
     }
 
-    // === Login ===
+    // === Função Login ===
     async function login() {
       const email = document.getElementById('email').value;
       const senha = document.getElementById('senha').value;
+
       const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
-      if (error) document.getElementById('msg').innerText = error.message;
-      else carregarCatalogo();
+
+      if (error) {
+        document.getElementById('msg').innerText = error.message;
+      } else {
+        carregarCatalogo();
+      }
     }
 
-    // === Logout ===
+    // === Função Logout ===
     async function logout() {
       await supabase.auth.signOut();
       document.getElementById('catalogo').style.display = 'none';
       document.getElementById('loginDiv').style.display = 'block';
+      document.getElementById('msg').innerText = '';
     }
 
-    // === Carregar catálogo ===
+    // === Carregar Catálogo de Filmes ===
     async function carregarCatalogo() {
       document.getElementById('loginDiv').style.display = 'none';
       document.getElementById('catalogo').style.display = 'block';
 
-      // pegar filmes do Supabase
-      let { data: filmes, error } = await supabase.from('filmes').select('*');
-      if (error) {
-        document.getElementById('filmes').innerText = 'Erro ao carregar filmes';
-        return;
-      }
+      const { data: filmes, error } = await supabase.from('filmes').select('*');
 
       const container = document.getElementById('filmes');
       container.innerHTML = '';
+
+      if (error) {
+        container.innerText = 'Erro ao carregar filmes';
+        console.error(error);
+        return;
+      }
+
       filmes.forEach(f => {
         const div = document.createElement('div');
         div.className = 'filme';
@@ -83,10 +134,11 @@
       });
     }
 
-    // Verificar se usuário já está logado
+    // === Persistir Sessão ===
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) carregarCatalogo();
     });
   </script>
+
 </body>
 </html>
