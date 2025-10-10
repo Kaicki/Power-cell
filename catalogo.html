@@ -176,7 +176,7 @@
     <input type="text" id="titulo" placeholder="Título do Filme">
     <input type="text" id="categoria" placeholder="Categoria (Ex: Ação, Terror)">
     <input type="text" id="capa" placeholder="URL da capa">
-    <input type="text" id="driveId" placeholder="ID do Google Drive">
+    <input type="text" id="linkDrive" placeholder="Link completo do Google Drive">
     <button onclick="adicionarFilme()">Adicionar</button>
     <button onclick="limparCatalogo()">Limpar Catálogo</button>
   </div>
@@ -194,16 +194,18 @@
     const catalogoEl = document.getElementById("catalogo");
     const painel = document.getElementById("painelAdmin");
 
-    if (!user) {
-      window.location.href = "index.html";
-    }
-
+    if (!user) window.location.href = "index.html";
     if (user.isAdmin) painel.style.display = "flex";
 
     document.getElementById("logout").onclick = () => {
       localStorage.removeItem("user");
       window.location.href = "index.html";
     };
+
+    function extrairIdDoLink(link) {
+      const match = link.match(/[-\w]{25,}/);
+      return match ? match[0] : null;
+    }
 
     function carregarFilmes() {
       const filmes = JSON.parse(localStorage.getItem("filmes")) || [];
@@ -241,10 +243,11 @@
       const titulo = document.getElementById("titulo").value.trim();
       const categoria = document.getElementById("categoria").value.trim() || "Outros";
       const capa = document.getElementById("capa").value.trim();
-      const driveId = document.getElementById("driveId").value.trim();
+      const linkDrive = document.getElementById("linkDrive").value.trim();
+      const driveId = extrairIdDoLink(linkDrive);
 
       if (!titulo || !driveId || !capa)
-        return alert("Preencha título, capa e ID do Drive!");
+        return alert("Preencha título, capa e link do Drive corretamente!");
 
       const filmes = JSON.parse(localStorage.getItem("filmes")) || [];
       filmes.push({ titulo, categoria, capa, driveId });
@@ -254,7 +257,7 @@
       document.getElementById("titulo").value = "";
       document.getElementById("categoria").value = "";
       document.getElementById("capa").value = "";
-      document.getElementById("driveId").value = "";
+      document.getElementById("linkDrive").value = "";
     }
 
     function removerFilme(index) {
