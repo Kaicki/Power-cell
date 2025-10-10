@@ -1,303 +1,167 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Powercine — Catálogo</title>
-  <style>
-    body {
-      margin: 0;
-      background: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      user-select: none;
-      overflow-x: hidden;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CinePower - Catálogo</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family: Arial, sans-serif; }
+  body { background:#000; color:#fff; }
+  header { background:#111; padding:20px; text-align:center; font-size:28px; font-weight:bold; display:flex; justify-content:space-between; align-items:center; }
 
-    header {
-      background: #111;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 25px;
-      font-size: 18px;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
+  .categoria { margin:20px 0; }
+  .categoria h3 { margin-left:20px; }
+  .lista-filmes { display:flex; overflow-x:auto; padding:10px 20px; gap:10px; scroll-behavior:smooth; }
+  .filme { flex:0 0 auto; width:160px; cursor:pointer; position:relative; transition: transform .3s; }
+  .filme img { width:100%; border-radius:8px; }
+  .filme:hover { transform:scale(1.1); }
+  .filme-info { text-align:center; margin-top:5px; }
+  .filme-info button { margin-top:5px; padding:4px 8px; font-size:12px; background:#ff3333; color:#fff; border:none; border-radius:4px; cursor:pointer; }
 
-    #logout {
-      background: #e50914;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 6px;
-      cursor: pointer;
-      color: white;
-      font-weight: bold;
-    }
+  #adminPanel { background:#222; padding:20px; margin:20px auto; max-width:600px; border-radius:8px; display:none; }
+  #adminPanel input, #adminPanel select, #adminPanel button { width:100%; margin:5px 0; padding:8px; border-radius:4px; border:none; }
+  #adminPanel button { background:#28a745; color:#fff; font-weight:bold; cursor:pointer; }
 
-    main {
-      padding: 20px;
-    }
-
-    h2 {
-      margin: 20px 10px;
-      font-size: 22px;
-    }
-
-    .linha {
-      display: flex;
-      overflow-x: auto;
-      gap: 15px;
-      padding: 10px;
-      scroll-behavior: smooth;
-    }
-
-    .linha::-webkit-scrollbar {
-      height: 8px;
-    }
-
-    .linha::-webkit-scrollbar-thumb {
-      background: #e50914;
-      border-radius: 4px;
-    }
-
-    .filme {
-      flex: 0 0 200px;
-      background: #111;
-      border-radius: 10px;
-      overflow: hidden;
-      transition: 0.3s;
-      cursor: pointer;
-      position: relative;
-    }
-
-    .filme img {
-      width: 100%;
-      height: 300px;
-      object-fit: cover;
-      display: block;
-      border-radius: 10px;
-    }
-
-    .filme:hover {
-      transform: scale(1.1);
-      z-index: 5;
-    }
-
-    .filme-info {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: linear-gradient(transparent, rgba(0,0,0,0.9));
-      padding: 10px;
-      opacity: 0;
-      transition: 0.3s;
-      text-align: center;
-    }
-
-    .filme:hover .filme-info {
-      opacity: 1;
-    }
-
-    /* Player interno */
-    #playerModal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.97);
-      z-index: 2000;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-    }
-
-    #playerModal iframe {
-      width: 90%;
-      height: 80vh;
-      border: none;
-      border-radius: 10px;
-    }
-
-    #fecharPlayer {
-      background: #e50914;
-      border: none;
-      padding: 10px 20px;
-      margin-top: 20px;
-      border-radius: 8px;
-      color: #fff;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    /* Painel Admin */
-    #painelAdmin {
-      position: fixed;
-      right: 0;
-      top: 0;
-      height: 100%;
-      width: 300px;
-      background: rgba(17,17,17,0.95);
-      border-left: 2px solid #e50914;
-      padding: 20px;
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 3000;
-    }
-
-    #painelAdmin input {
-      width: 100%;
-      padding: 8px;
-      border: none;
-      border-radius: 6px;
-    }
-
-    #painelAdmin button {
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      background: #e50914;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-  </style>
+  #playerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); justify-content:center; align-items:center; }
+  #playerModal iframe { width:80%; height:80%; border:none; border-radius:8px; }
+  #playerModal button { position:absolute; top:20px; right:20px; padding:8px 12px; font-size:16px; background:#ff3333; border:none; border-radius:4px; cursor:pointer; color:#fff; }
+</style>
 </head>
 <body>
-  <header>
-    <span><strong>Powercine</strong> 🎬</span>
-    <button id="logout">Sair</button>
-  </header>
 
-  <div id="painelAdmin">
-    <h3>Adicionar Filme</h3>
-    <input type="text" id="titulo" placeholder="Título do Filme">
-    <input type="text" id="categoria" placeholder="Categoria (Ex: Ação, Terror)">
-    <input type="text" id="capa" placeholder="URL da capa">
-    <input type="text" id="linkDrive" placeholder="Link completo do Google Drive">
-    <button onclick="adicionarFilme()">Adicionar</button>
-    <button onclick="limparCatalogo()">Limpar Catálogo</button>
-  </div>
+<header>
+  CinePower
+  <button onclick="logout()" style="background:#555;color:#fff;padding:5px 10px;border:none;border-radius:4px;cursor:pointer;">Sair</button>
+</header>
 
-  <main id="catalogo"></main>
+<!-- Admin Panel -->
+<div id="adminPanel">
+  <h3>Admin Panel - Filmes</h3>
+  <input type="text" id="titulo" placeholder="Título do filme">
+  <input type="text" id="categoria" placeholder="Categoria">
+  <input type="text" id="capa" placeholder="URL da capa">
+  <input type="text" id="linkDrive" placeholder="Link do Google Drive">
+  <button onclick="adicionarFilme()">Adicionar Filme</button>
 
-  <!-- Player Modal -->
-  <div id="playerModal">
-    <iframe id="playerFrame" allowfullscreen></iframe>
-    <button id="fecharPlayer">Voltar ao Catálogo</button>
-  </div>
+  <h3>Adicionar Usuário</h3>
+  <input type="email" id="emailUser" placeholder="Email">
+  <input type="password" id="senhaUser" placeholder="Senha">
+  <select id="roleUser">
+    <option value="user">Usuário</option>
+    <option value="admin">Admin</option>
+  </select>
+  <button onclick="criarUsuario()">Adicionar Usuário</button>
+</div>
 
-  <script>
-    const user = JSON.parse(localStorage.getItem("user"));
-    const catalogoEl = document.getElementById("catalogo");
-    const painel = document.getElementById("painelAdmin");
+<div id="catalogo"></div>
 
-    if (!user) window.location.href = "index.html";
-    if (user.isAdmin) painel.style.display = "flex";
+<!-- Player Modal -->
+<div id="playerModal">
+  <button onclick="fecharPlayer()">X</button>
+  <iframe id="playerFrame" src="" allowfullscreen></iframe>
+</div>
 
-    document.getElementById("logout").onclick = () => {
-      localStorage.removeItem("user");
-      window.location.href = "index.html";
-    };
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js"></script>
 
-    function extrairIdDoLink(link) {
-      const match = link.match(/[-\w]{25,}/);
-      return match ? match[0] : null;
-    }
+<script>
+  const firebaseConfig = {
+    apiKey: "SUA_API_KEY",
+    authDomain: "seu-projeto.firebaseapp.com",
+    projectId: "seu-projeto",
+    storageBucket: "seu-projeto.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef"
+  };
 
-    function carregarFilmes() {
-      const filmes = JSON.parse(localStorage.getItem("filmes")) || [];
-      catalogoEl.innerHTML = "";
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
 
-      const categorias = {};
-      filmes.forEach(f => {
-        if (!categorias[f.categoria]) categorias[f.categoria] = [];
-        categorias[f.categoria].push(f);
-      });
+  const catalogoEl = document.getElementById("catalogo");
+  const adminPanel = document.getElementById("adminPanel");
+  let currentUser = null;
 
-      for (const cat in categorias) {
-        const secao = document.createElement("section");
-        secao.innerHTML = `<h2>${cat}</h2><div class='linha'></div>`;
-        const linha = secao.querySelector(".linha");
-
-        categorias[cat].forEach((f, i) => {
-          const card = document.createElement("div");
-          card.className = "filme";
-          card.innerHTML = `
-            <img src="${f.capa}" alt="${f.titulo}">
-            <div class="filme-info">
-              <h4>${f.titulo}</h4>
-              ${user.isAdmin ? `<button onclick="removerFilme(${i})">Remover</button>` : ""}
-            </div>`;
-          card.onclick = () => abrirPlayer(f.driveId);
-          linha.appendChild(card);
-        });
-
-        catalogoEl.appendChild(secao);
-      }
-    }
-
-    function adicionarFilme() {
-      const titulo = document.getElementById("titulo").value.trim();
-      const categoria = document.getElementById("categoria").value.trim() || "Outros";
-      const capa = document.getElementById("capa").value.trim();
-      const linkDrive = document.getElementById("linkDrive").value.trim();
-      const driveId = extrairIdDoLink(linkDrive);
-
-      if (!titulo || !driveId || !capa)
-        return alert("Preencha título, capa e link do Drive corretamente!");
-
-      const filmes = JSON.parse(localStorage.getItem("filmes")) || [];
-      filmes.push({ titulo, categoria, capa, driveId });
-      localStorage.setItem("filmes", JSON.stringify(filmes));
+  auth.onAuthStateChanged(async (user)=>{
+    if(user){
+      currentUser = user;
+      const doc = await db.collection("usuarios").doc(user.uid).get();
+      const role = doc.exists ? doc.data().role : "user";
+      currentUser.role = role;
+      if(role==="admin") adminPanel.style.display="block";
       carregarFilmes();
-
-      document.getElementById("titulo").value = "";
-      document.getElementById("categoria").value = "";
-      document.getElementById("capa").value = "";
-      document.getElementById("linkDrive").value = "";
+    } else {
+      window.location.href = "login.html";
     }
+  });
 
-    function removerFilme(index) {
-      const filmes = JSON.parse(localStorage.getItem("filmes")) || [];
-      filmes.splice(index, 1);
-      localStorage.setItem("filmes", JSON.stringify(filmes));
-      carregarFilmes();
-    }
+  async function logout() { await auth.signOut(); }
 
-    function limparCatalogo() {
-      if (confirm("Tem certeza que deseja limpar todo o catálogo?")) {
-        localStorage.removeItem("filmes");
-        carregarFilmes();
-      }
-    }
-
-    // Player interno
-    const playerModal = document.getElementById("playerModal");
-    const playerFrame = document.getElementById("playerFrame");
-    document.getElementById("fecharPlayer").onclick = () => {
-      playerModal.style.display = "none";
-      playerFrame.src = "";
-    };
-
-    function abrirPlayer(id) {
-      playerFrame.src = `https://drive.google.com/file/d/${id}/preview`;
-      playerModal.style.display = "flex";
-    }
-
-    // Proteções leves
-    document.addEventListener("contextmenu", e => e.preventDefault());
-    document.addEventListener("keydown", e => {
-      if (e.key === "PrintScreen") {
-        alert("Captura de tela desativada neste site.");
-        navigator.clipboard.writeText("");
-      }
-      if (e.ctrlKey && (e.key === "u" || e.key === "U" || e.key === "s")) e.preventDefault();
+  async function carregarFilmes() {
+    catalogoEl.innerHTML="";
+    const snapshot = await db.collection("filmes").get();
+    const categorias = {};
+    snapshot.forEach(doc=>{
+      const f = doc.data();
+      if(!categorias[f.categoria]) categorias[f.categoria]=[];
+      categorias[f.categoria].push({id:doc.id,...f});
     });
+    for(const cat in categorias){
+      const divCat = document.createElement("div");
+      divCat.className="categoria";
+      divCat.innerHTML=`<h3>${cat}</h3><div class="lista-filmes" id="lista-${cat}"></div>`;
+      catalogoEl.appendChild(divCat);
+      const lista = divCat.querySelector(".lista-filmes");
+      categorias[cat].forEach(f=>{
+        const card=document.createElement("div");
+        card.className="filme";
+        card.innerHTML=`<img src="${f.capa}" alt="${f.titulo}"><div class="filme-info"><h4>${f.titulo}</h4>${currentUser.role==="admin"?`<button onclick="removerFilme('${f.id}')">Remover</button>`:""}</div>`;
+        card.onclick=()=>abrirPlayer(f.driveId);
+        lista.appendChild(card);
+      });
+    }
+  }
 
+  async function adicionarFilme() {
+    const titulo=document.getElementById("titulo").value.trim();
+    const categoria=document.getElementById("categoria").value.trim()||"Outros";
+    const capa=document.getElementById("capa").value.trim();
+    const link=document.getElementById("linkDrive").value.trim();
+    if(!titulo||!capa||!link) return alert("Preencha todos os campos!");
+    const idMatch=link.match(/\/d\/(.*?)\//);
+    const driveId=idMatch? idMatch[1]:link;
+    await db.collection("filmes").add({titulo,categoria,capa,driveId});
     carregarFilmes();
-  </script>
+    document.getElementById("titulo").value="";
+    document.getElementById("categoria").value="";
+    document.getElementById("capa").value="";
+    document.getElementById("linkDrive").value="";
+  }
+
+  async function removerFilme(id){ await db.collection("filmes").doc(id).delete(); carregarFilmes(); }
+
+  async function criarUsuario(){
+    if(currentUser.role!=="admin") return alert("Somente admins podem criar usuários.");
+    const email=document.getElementById("emailUser").value.trim();
+    const senha=document.getElementById("senhaUser").value.trim();
+    const role=document.getElementById("roleUser").value;
+    if(!email||!senha) return alert("Preencha email e senha!");
+    try{
+      const userCredential=await auth.createUserWithEmailAndPassword(email,senha);
+      await db.collection("usuarios").doc(userCredential.user.uid).set({email,role});
+      alert("Usuário criado com sucesso!");
+      document.getElementById("emailUser").value="";
+      document.getElementById("senhaUser").value="";
+    }catch(err){ alert("Erro: "+err.message); }
+  }
+
+  const playerModal=document.getElementById("playerModal");
+  const playerFrame=document.getElementById("playerFrame");
+  function abrirPlayer(driveId){ playerFrame.src=`https://drive.google.com/file/d/${driveId}/preview`; playerModal.style.display="flex"; }
+  function fecharPlayer(){ playerFrame.src=""; playerModal.style.display="none"; }
+</script>
+
 </body>
 </html>
