@@ -6,24 +6,15 @@
 <title>Powercine - Login/Registro</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  body {
-    margin:0; padding:0; font-family: Arial, sans-serif; background:#111; color:#fff;
-    display:flex; justify-content:center; align-items:center; height:100vh;
-  }
-  .container {
-    display:flex; flex-wrap:wrap; gap:50px; background:#222; padding:40px; border-radius:12px;
-    box-shadow:0 0 20px rgba(0,0,0,0.8);
-  }
-  .box {
-    width:250px; text-align:center;
-    background:#333; padding:20px; border-radius:10px;
-  }
+  body { margin:0; font-family: Arial; background:#111; color:#fff; display:flex; justify-content:center; align-items:center; height:100vh; }
+  .container { display:flex; gap:50px; background:#222; padding:40px; border-radius:12px; }
+  .box { width:250px; text-align:center; background:#333; padding:20px; border-radius:10px; }
   .box h2 { margin-bottom:15px; }
   input { width:90%; padding:10px; margin:8px 0; border-radius:5px; border:none; }
   button { width:95%; padding:10px; margin-top:10px; border:none; border-radius:5px; background:#28a745; color:#fff; font-weight:bold; cursor:pointer; transition:0.3s; }
   button:hover { background:#1e7e34; }
-  #msg { color:#ff6666; margin-top:10px; min-height:20px; }
-  #catalogo { display:none; margin-top:20px; text-align:center; }
+  #msgLogin, #msgRegistro { color:#ff6666; min-height:20px; margin-top:10px; }
+  #catalogo { display:none; text-align:center; margin-top:20px; }
   .filme { display:inline-block; margin:10px; cursor:pointer; transition: transform 0.3s; }
   .filme img { width:150px; border-radius:8px; }
   .filme:hover { transform:scale(1.05); }
@@ -62,17 +53,16 @@
 
 <script>
   // Supabase
-  const supabaseUrl = 'https://bbbhatsqjnrjfbhkwrcp.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiYmhhdHNxam5yamZiaGt3cmNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxMTMxOTYsImV4cCI6MjA3NTY4OTE5Nn0.KxPfc0SLkALTFsayNWm3_zAUEdBQwMlNlHUYZlcU7FU';
+  const supabaseUrl = 'https://zcvhgofvygxetbuicvab.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpjdmhnb2Z2eWd4ZXRidWljdmFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwODk1MTQsImV4cCI6MjA3NTY2NTUxNH0.PWkAEGMfR87XU12Tj6MoHR2v6LehnXuT5RvcHvMjhoo';
   const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-  // REGISTRAR
+  // Registrar
   async function registrar(){
     const email = document.getElementById('regEmail').value;
     const senha = document.getElementById('regSenha').value;
     if(!email || senha.length<6){ 
-      document.getElementById('msgRegistro').innerText='Preencha email e senha válida';
-      return; 
+      document.getElementById('msgRegistro').innerText='Preencha email e senha válida'; return; 
     }
     const { data, error } = await supabase.auth.signUp({ email, password: senha });
     if(error && !error.message.includes("User already registered")) document.getElementById('msgRegistro').innerText = error.message;
@@ -84,7 +74,7 @@
     }
   }
 
-  // LOGIN
+  // Login
   async function login(){
     const email = document.getElementById('loginEmail').value;
     const senha = document.getElementById('loginSenha').value;
@@ -94,7 +84,7 @@
     else carregarCatalogo();
   }
 
-  // LOGOUT
+  // Logout
   async function logout(){
     await supabase.auth.signOut();
     document.getElementById('catalogo').style.display='none';
@@ -103,7 +93,7 @@
     document.getElementById('msgRegistro').innerText='';
   }
 
-  // CARREGAR CATÁLOGO
+  // Carregar catálogo
   async function carregarCatalogo(){
     document.querySelector('.container').style.display='none';
     document.getElementById('catalogo').style.display='block';
