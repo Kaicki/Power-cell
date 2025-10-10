@@ -3,49 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Powercine - Login</title>
+  <title>Powercine - Login Rápido</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #fff;
-      text-align: center;
-      padding: 50px;
-    }
-
-    input, button {
-      padding: 10px;
-      margin: 5px;
-      border-radius: 5px;
-      border: none;
-    }
-
-    #catalogo {
-      display: none;
-      margin-top: 30px;
-    }
-
-    .filme {
-      display: inline-block;
-      margin: 10px;
-      cursor: pointer;
-      transition: transform 0.3s;
-    }
-
-    .filme img {
-      width: 150px;
-      border-radius: 8px;
-    }
-
-    .filme:hover {
-      transform: scale(1.1);
-    }
-
-    #msg {
-      margin-top: 10px;
-      color: #ff6666;
-    }
+    body { font-family: Arial; background: #111; color: #fff; text-align:center; padding:50px; }
+    input, button { padding:10px; margin:5px; border-radius:5px; border:none; }
+    #catalogo { display:none; margin-top:30px; }
+    .filme { display:inline-block; margin:10px; cursor:pointer; transition: transform 0.3s; }
+    .filme img { width:150px; border-radius:8px; }
+    .filme:hover { transform: scale(1.1); }
+    #msg { margin-top:10px; color:#ff6666; }
   </style>
 </head>
 <body>
@@ -56,8 +23,7 @@
   <div id="loginDiv">
     <input type="email" id="email" placeholder="Email"><br>
     <input type="password" id="senha" placeholder="Senha"><br>
-    <button onclick="login()">Login</button>
-    <button onclick="registrar()">Registrar</button>
+    <button onclick="registrar()">Registrar + Login</button>
     <p id="msg"></p>
   </div>
 
@@ -69,49 +35,50 @@
   </div>
 
   <script>
-    // === Configuração Supabase ===
+    // Configuração Supabase
     const supabaseUrl = 'https://bbbhatsqjnrjfbhkwrcp.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiYmhhdHNxam5yamZiaGt3cmNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxMTMxOTYsImV4cCI6MjA3NTY4OTE5Nn0.KxPfc0SLkALTFsayNWm3_zAUEdBQwMlNlHUYZlcU7FU';
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // === Função Registrar Usuário ===
+    // Registrar e logar automaticamente
     async function registrar() {
       const email = document.getElementById('email').value;
       const senha = document.getElementById('senha').value;
 
+      if(!email || !senha || senha.length < 6){
+        document.getElementById('msg').innerText = 'Preencha email e senha (mínimo 6 caracteres)';
+        return;
+      }
+
+      // Tentativa de registro
       const { data, error } = await supabase.auth.signUp({ email, password: senha });
 
-      if (error) {
+      if(error && !error.message.includes("User already registered")){
         document.getElementById('msg').innerText = error.message;
-      } else {
-        document.getElementById('msg').innerText = 'Registrado! Verifique seu email.';
+        return;
       }
+
+      // Login automático após registrar
+      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({ email, password: senha });
+
+      if(loginError){
+        document.getElementById('msg').innerText = loginError.message;
+        return;
+      }
+
+      carregarCatalogo();
     }
 
-    // === Função Login ===
-    async function login() {
-      const email = document.getElementById('email').value;
-      const senha = document.getElementById('senha').value;
-
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
-
-      if (error) {
-        document.getElementById('msg').innerText = error.message;
-      } else {
-        carregarCatalogo();
-      }
-    }
-
-    // === Função Logout ===
-    async function logout() {
+    // Logout
+    async function logout(){
       await supabase.auth.signOut();
       document.getElementById('catalogo').style.display = 'none';
       document.getElementById('loginDiv').style.display = 'block';
       document.getElementById('msg').innerText = '';
     }
 
-    // === Carregar Catálogo de Filmes ===
-    async function carregarCatalogo() {
+    // Carregar catálogo de filmes
+    async function carregarCatalogo(){
       document.getElementById('loginDiv').style.display = 'none';
       document.getElementById('catalogo').style.display = 'block';
 
@@ -120,7 +87,7 @@
       const container = document.getElementById('filmes');
       container.innerHTML = '';
 
-      if (error) {
+      if(error){
         container.innerText = 'Erro ao carregar filmes';
         console.error(error);
         return;
@@ -134,9 +101,9 @@
       });
     }
 
-    // === Persistir Sessão ===
+    // Persistir sessão
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) carregarCatalogo();
+      if(data.session) carregarCatalogo();
     });
   </script>
 
