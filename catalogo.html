@@ -10,7 +10,7 @@
       background: #000;
       color: #fff;
       font-family: Arial, sans-serif;
-      overflow-x: hidden;
+      user-select: none; /* Impede seleção de texto */
     }
 
     header {
@@ -32,30 +32,23 @@
       font-weight: bold;
     }
 
-    #logout:hover {
-      background: #b00610;
-    }
-
-    h2 {
-      margin: 20px 25px;
-      font-size: 24px;
-    }
-
     .catalogo {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 15px;
-      padding: 0 25px 40px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 20px;
+      padding: 25px;
     }
 
     .filme {
+      background: #111;
+      border-radius: 10px;
+      overflow: hidden;
+      transition: 0.3s;
       position: relative;
-      cursor: pointer;
-      transition: transform 0.3s;
     }
 
     .filme:hover {
-      transform: scale(1.1);
+      transform: scale(1.08);
       z-index: 10;
     }
 
@@ -63,16 +56,24 @@
       width: 100%;
       height: 270px;
       object-fit: cover;
-      border-radius: 8px;
+      border: none;
     }
 
-    .filme h4 {
-      margin-top: 8px;
+    .filme-info {
+      padding: 10px;
+      background: #000a;
+      position: absolute;
+      bottom: 0;
+      width: 100%;
       text-align: center;
-      font-size: 15px;
+      opacity: 0;
+      transition: opacity 0.3s;
     }
 
-    /* Painel Admin */
+    .filme:hover .filme-info {
+      opacity: 1;
+    }
+
     #painelAdmin {
       position: fixed;
       right: 0;
@@ -85,7 +86,7 @@
       display: none;
       flex-direction: column;
       gap: 10px;
-      z-index: 999;
+      z-index: 100;
     }
 
     #painelAdmin input {
@@ -104,60 +105,6 @@
       font-weight: bold;
       cursor: pointer;
     }
-
-    #painelAdmin button:hover {
-      background: #b00610;
-    }
-
-    /* Modal Player */
-    #playerModal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.95);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      flex-direction: column;
-    }
-
-    #playerModal iframe {
-      width: 90%;
-      height: 70%;
-      border: none;
-      border-radius: 10px;
-    }
-
-    #fecharModal {
-      margin-top: 20px;
-      background: #e50914;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      color: #fff;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    #fecharModal:hover {
-      background: #b00610;
-    }
-
-    /* Marca d'água */
-    .marca-dagua {
-      position: fixed;
-      top: 15px;
-      left: 15px;
-      color: rgba(255, 255, 255, 0.15);
-      font-size: 14px;
-      z-index: 2000;
-      pointer-events: none;
-      user-select: none;
-      font-weight: bold;
-    }
   </style>
 </head>
 <body>
@@ -166,52 +113,27 @@
     <button id="logout">Sair</button>
   </header>
 
-  <!-- Marca d’água -->
-  <div class="marca-dagua">Powercine © <span id="marcaUser"></span></div>
-
   <div id="painelAdmin">
     <h3>Adicionar Filme</h3>
     <input type="text" id="titulo" placeholder="Título do Filme">
-    <input type="text" id="capa" placeholder="URL da Capa (imagem)">
+    <input type="text" id="capa" placeholder="URL da capa (link da imagem)">
     <input type="text" id="driveId" placeholder="ID do Google Drive">
     <button onclick="adicionarFilme()">Adicionar</button>
     <button onclick="limparCatalogo()">Limpar Catálogo</button>
   </div>
 
-  <h2>Catálogo</h2>
   <div class="catalogo" id="catalogo"></div>
 
-  <!-- Modal Player -->
-  <div id="playerModal">
-    <iframe id="playerFrame" sandbox="allow-scripts allow-same-origin allow-presentation" allowfullscreen></iframe>
-    <button id="fecharModal">Fechar</button>
-  </div>
-
   <script>
-    // 🔒 Bloqueio de clique direito e atalhos
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('keydown', e => {
-      if (e.ctrlKey && ['u','U','s','S','c','C','i','I','p','P'].includes(e.key)) {
-        e.preventDefault();
-      }
-    });
-
-    // Marca d’água dinâmica
-    const user = JSON.parse(localStorage.getItem("user")) || { name: "Convidado" };
-    document.getElementById("marcaUser").innerText = `${user.name || 'Usuário'} — ${new Date().toLocaleString()}`;
-
+    const user = JSON.parse(localStorage.getItem("user"));
     const catalogoEl = document.getElementById("catalogo");
     const painel = document.getElementById("painelAdmin");
-    const modal = document.getElementById("playerModal");
-    const playerFrame = document.getElementById("playerFrame");
 
     if (!user) {
       window.location.href = "index.html";
     }
 
-    if (user.isAdmin) {
-      painel.style.display = "flex";
-    }
+    if (user.isAdmin) painel.style.display = "flex";
 
     document.getElementById("logout").onclick = () => {
       localStorage.removeItem("user");
@@ -225,24 +147,17 @@
         const card = document.createElement("div");
         card.className = "filme";
         card.innerHTML = `
-          <img src="${f.capa}" alt="Capa de ${f.titulo}">
-          <h4>${f.titulo}</h4>
-          ${user.isAdmin ? `<button onclick="removerFilme(${i});event.stopPropagation();" style="position:absolute;top:5px;right:5px;background:#e50914;border:none;color:white;padding:5px;border-radius:4px;cursor:pointer;">X</button>` : ""}
-        `;
-        card.onclick = () => abrirFilme(f.driveId);
+          <img src="${f.capa}" alt="${f.titulo}">
+          <div class="filme-info">
+            <h4>${f.titulo}</h4>
+            ${user.isAdmin ? `<button onclick="removerFilme(${i})">Remover</button>` : ""}
+          </div>`;
+        card.onclick = () => {
+          window.open(`https://drive.google.com/file/d/${f.driveId}/preview`, "_blank");
+        };
         catalogoEl.appendChild(card);
       });
     }
-
-    function abrirFilme(driveId) {
-      playerFrame.src = `https://drive.google.com/file/d/${driveId}/preview`;
-      modal.style.display = "flex";
-    }
-
-    document.getElementById("fecharModal").onclick = () => {
-      modal.style.display = "none";
-      playerFrame.src = "";
-    };
 
     function adicionarFilme() {
       const titulo = document.getElementById("titulo").value.trim();
@@ -250,13 +165,12 @@
       const driveId = document.getElementById("driveId").value.trim();
 
       if (!titulo || !driveId || !capa)
-        return alert("Preencha o título, a capa e o ID do Drive!");
+        return alert("Preencha título, capa e ID do Drive!");
 
       const filmes = JSON.parse(localStorage.getItem("filmes")) || [];
       filmes.push({ titulo, capa, driveId });
       localStorage.setItem("filmes", JSON.stringify(filmes));
       carregarFilmes();
-
       document.getElementById("titulo").value = "";
       document.getElementById("capa").value = "";
       document.getElementById("driveId").value = "";
@@ -275,6 +189,16 @@
         carregarFilmes();
       }
     }
+
+    // --- Proteção básica contra gravação e print ---
+    document.addEventListener("contextmenu", e => e.preventDefault());
+    document.addEventListener("keydown", e => {
+      if (e.key === "PrintScreen") {
+        alert("Captura de tela desativada neste site.");
+        navigator.clipboard.writeText("");
+      }
+      if (e.ctrlKey && (e.key === "u" || e.key === "U" || e.key === "s")) e.preventDefault();
+    });
 
     carregarFilmes();
   </script>
