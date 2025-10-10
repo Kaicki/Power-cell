@@ -1,111 +1,129 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Powercine - Login Rápido</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body { font-family: Arial; background: #111; color: #fff; text-align:center; padding:50px; }
-    input, button { padding:10px; margin:5px; border-radius:5px; border:none; }
-    #catalogo { display:none; margin-top:30px; }
-    .filme { display:inline-block; margin:10px; cursor:pointer; transition: transform 0.3s; }
-    .filme img { width:150px; border-radius:8px; }
-    .filme:hover { transform: scale(1.1); }
-    #msg { margin-top:10px; color:#ff6666; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Powercine - Login/Registro</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body {
+    margin:0; padding:0; font-family: Arial, sans-serif; background:#111; color:#fff;
+    display:flex; justify-content:center; align-items:center; height:100vh;
+  }
+  .container {
+    display:flex; flex-wrap:wrap; gap:50px; background:#222; padding:40px; border-radius:12px;
+    box-shadow:0 0 20px rgba(0,0,0,0.8);
+  }
+  .box {
+    width:250px; text-align:center;
+    background:#333; padding:20px; border-radius:10px;
+  }
+  .box h2 { margin-bottom:15px; }
+  input { width:90%; padding:10px; margin:8px 0; border-radius:5px; border:none; }
+  button { width:95%; padding:10px; margin-top:10px; border:none; border-radius:5px; background:#28a745; color:#fff; font-weight:bold; cursor:pointer; transition:0.3s; }
+  button:hover { background:#1e7e34; }
+  #msg { color:#ff6666; margin-top:10px; min-height:20px; }
+  #catalogo { display:none; margin-top:20px; text-align:center; }
+  .filme { display:inline-block; margin:10px; cursor:pointer; transition: transform 0.3s; }
+  .filme img { width:150px; border-radius:8px; }
+  .filme:hover { transform:scale(1.05); }
+</style>
 </head>
 <body>
 
-  <h1>Powercine</h1>
+<div class="container">
 
-  <!-- LOGIN / REGISTRO -->
-  <div id="loginDiv">
-    <input type="email" id="email" placeholder="Email"><br>
-    <input type="password" id="senha" placeholder="Senha"><br>
-    <button onclick="registrar()">Registrar + Login</button>
-    <p id="msg"></p>
+  <!-- LOGIN -->
+  <div class="box">
+    <h2>Login</h2>
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginSenha" placeholder="Senha">
+    <button onclick="login()">Entrar</button>
+    <div id="msgLogin"></div>
   </div>
 
-  <!-- CATÁLOGO -->
-  <div id="catalogo">
-    <h2>Catálogo de Filmes</h2>
-    <div id="filmes"></div>
-    <button onclick="logout()">Sair</button>
+  <!-- REGISTRO -->
+  <div class="box">
+    <h2>Registrar</h2>
+    <input type="email" id="regEmail" placeholder="Email">
+    <input type="password" id="regSenha" placeholder="Senha (mín 6 caracteres)">
+    <button onclick="registrar()">Registrar</button>
+    <div id="msgRegistro"></div>
   </div>
 
-  <script>
-    // Configuração Supabase
-    const supabaseUrl = 'https://bbbhatsqjnrjfbhkwrcp.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiYmhhdHNxam5yamZiaGt3cmNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxMTMxOTYsImV4cCI6MjA3NTY4OTE5Nn0.KxPfc0SLkALTFsayNWm3_zAUEdBQwMlNlHUYZlcU7FU';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+</div>
 
-    // Registrar e logar automaticamente
-    async function registrar() {
-      const email = document.getElementById('email').value;
-      const senha = document.getElementById('senha').value;
+<!-- CATÁLOGO -->
+<div id="catalogo">
+  <h2>Catálogo de Filmes</h2>
+  <div id="filmes"></div>
+  <button onclick="logout()">Sair</button>
+</div>
 
-      if(!email || !senha || senha.length < 6){
-        document.getElementById('msg').innerText = 'Preencha email e senha (mínimo 6 caracteres)';
-        return;
-      }
+<script>
+  // Supabase
+  const supabaseUrl = 'https://bbbhatsqjnrjfbhkwrcp.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiYmhhdHNxam5yamZiaGt3cmNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxMTMxOTYsImV4cCI6MjA3NTY4OTE5Nn0.KxPfc0SLkALTFsayNWm3_zAUEdBQwMlNlHUYZlcU7FU';
+  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-      // Tentativa de registro
-      const { data, error } = await supabase.auth.signUp({ email, password: senha });
-
-      if(error && !error.message.includes("User already registered")){
-        document.getElementById('msg').innerText = error.message;
-        return;
-      }
-
-      // Login automático após registrar
+  // REGISTRAR
+  async function registrar(){
+    const email = document.getElementById('regEmail').value;
+    const senha = document.getElementById('regSenha').value;
+    if(!email || senha.length<6){ 
+      document.getElementById('msgRegistro').innerText='Preencha email e senha válida';
+      return; 
+    }
+    const { data, error } = await supabase.auth.signUp({ email, password: senha });
+    if(error && !error.message.includes("User already registered")) document.getElementById('msgRegistro').innerText = error.message;
+    else{
+      // login automático
       const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({ email, password: senha });
-
-      if(loginError){
-        document.getElementById('msg').innerText = loginError.message;
-        return;
-      }
-
+      if(loginError){ document.getElementById('msgRegistro').innerText=loginError.message; return; }
       carregarCatalogo();
     }
+  }
 
-    // Logout
-    async function logout(){
-      await supabase.auth.signOut();
-      document.getElementById('catalogo').style.display = 'none';
-      document.getElementById('loginDiv').style.display = 'block';
-      document.getElementById('msg').innerText = '';
-    }
+  // LOGIN
+  async function login(){
+    const email = document.getElementById('loginEmail').value;
+    const senha = document.getElementById('loginSenha').value;
+    if(!email || !senha){ document.getElementById('msgLogin').innerText='Preencha email e senha'; return; }
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
+    if(error) document.getElementById('msgLogin').innerText = error.message;
+    else carregarCatalogo();
+  }
 
-    // Carregar catálogo de filmes
-    async function carregarCatalogo(){
-      document.getElementById('loginDiv').style.display = 'none';
-      document.getElementById('catalogo').style.display = 'block';
+  // LOGOUT
+  async function logout(){
+    await supabase.auth.signOut();
+    document.getElementById('catalogo').style.display='none';
+    document.querySelector('.container').style.display='flex';
+    document.getElementById('msgLogin').innerText='';
+    document.getElementById('msgRegistro').innerText='';
+  }
 
-      const { data: filmes, error } = await supabase.from('filmes').select('*');
-
-      const container = document.getElementById('filmes');
-      container.innerHTML = '';
-
-      if(error){
-        container.innerText = 'Erro ao carregar filmes';
-        console.error(error);
-        return;
-      }
-
-      filmes.forEach(f => {
-        const div = document.createElement('div');
-        div.className = 'filme';
-        div.innerHTML = `<img src="${f.capa}" alt="${f.titulo}"><br>${f.titulo}`;
-        container.appendChild(div);
-      });
-    }
-
-    // Persistir sessão
-    supabase.auth.getSession().then(({ data }) => {
-      if(data.session) carregarCatalogo();
+  // CARREGAR CATÁLOGO
+  async function carregarCatalogo(){
+    document.querySelector('.container').style.display='none';
+    document.getElementById('catalogo').style.display='block';
+    const { data: filmes, error } = await supabase.from('filmes').select('*');
+    const container = document.getElementById('filmes');
+    container.innerHTML='';
+    if(error){ container.innerText='Erro ao carregar filmes'; console.error(error); return; }
+    filmes.forEach(f=>{
+      const div = document.createElement('div');
+      div.className='filme';
+      div.innerHTML=`<img src="${f.capa}" alt="${f.titulo}"><br>${f.titulo}`;
+      container.appendChild(div);
     });
-  </script>
+  }
+
+  // Persistir sessão
+  supabase.auth.getSession().then(({data})=>{
+    if(data.session) carregarCatalogo();
+  });
+</script>
 
 </body>
 </html>
