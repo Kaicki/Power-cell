@@ -67,100 +67,115 @@
 <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js"></script>
 
 <script>
-  const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "seu-projeto.firebaseapp.com",
-    projectId: "seu-projeto",
-    storageBucket: "seu-projeto.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdef"
-  };
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "seu-projeto.firebaseapp.com",
+  projectId: "seu-projeto",
+  storageBucket: "seu-projeto.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef"
+};
 
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  const auth = firebase.auth();
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
 
-  const catalogoEl = document.getElementById("catalogo");
-  const adminPanel = document.getElementById("adminPanel");
-  let currentUser = null;
+const catalogoEl = document.getElementById("catalogo");
+const adminPanel = document.getElementById("adminPanel");
+let currentUser = null;
 
-  auth.onAuthStateChanged(async (user)=>{
-    if(user){
-      currentUser = user;
-      const doc = await db.collection("usuarios").doc(user.uid).get();
-      const role = doc.exists ? doc.data().role : "user";
-      currentUser.role = role;
-      if(role==="admin") adminPanel.style.display="block";
-      carregarFilmes();
-    } else {
-      window.location.href = "index.html";
-    }
-  });
-
-  async function logout() { await auth.signOut(); }
-
-  async function carregarFilmes() {
-    catalogoEl.innerHTML="";
-    const snapshot = await db.collection("filmes").get();
-    const categorias = {};
-    snapshot.forEach(doc=>{
-      const f = doc.data();
-      if(!categorias[f.categoria]) categorias[f.categoria]=[];
-      categorias[f.categoria].push({id:doc.id,...f});
-    });
-    for(const cat in categorias){
-      const divCat = document.createElement("div");
-      divCat.className="categoria";
-      divCat.innerHTML=`<h3>${cat}</h3><div class="lista-filmes" id="lista-${cat}"></div>`;
-      catalogoEl.appendChild(divCat);
-      const lista = divCat.querySelector(".lista-filmes");
-      categorias[cat].forEach(f=>{
-        const card=document.createElement("div");
-        card.className="filme";
-        card.innerHTML=`<img src="${f.capa}" alt="${f.titulo}"><div class="filme-info"><h4>${f.titulo}</h4>${currentUser.role==="admin"?`<button onclick="removerFilme('${f.id}')">Remover</button>`:""}</div>`;
-        card.onclick=()=>abrirPlayer(f.driveId);
-        lista.appendChild(card);
-      });
-    }
-  }
-
-  async function adicionarFilme() {
-    const titulo=document.getElementById("titulo").value.trim();
-    const categoria=document.getElementById("categoria").value.trim()||"Outros";
-    const capa=document.getElementById("capa").value.trim();
-    const link=document.getElementById("linkDrive").value.trim();
-    if(!titulo||!capa||!link) return alert("Preencha todos os campos!");
-    const idMatch=link.match(/\/d\/(.*?)\//);
-    const driveId=idMatch? idMatch[1]:link;
-    await db.collection("filmes").add({titulo,categoria,capa,driveId});
+// Verifica login
+auth.onAuthStateChanged(async (user)=>{
+  if(user){
+    currentUser = user;
+    const doc = await db.collection("usuarios").doc(user.uid).get();
+    const role = doc.exists ? doc.data().role : "user";
+    currentUser.role = role;
+    if(role==="admin") adminPanel.style.display="block";
     carregarFilmes();
-    document.getElementById("titulo").value="";
-    document.getElementById("categoria").value="";
-    document.getElementById("capa").value="";
-    document.getElementById("linkDrive").value="";
+  } else {
+    window.location.href="index.html";
   }
+});
 
-  async function removerFilme(id){ await db.collection("filmes").doc(id).delete(); carregarFilmes(); }
+// Logout
+async function logout(){
+  await auth.signOut();
+  window.location.href="index.html";
+}
 
-  async function criarUsuario(){
-    if(currentUser.role!=="admin") return alert("Somente admins podem criar usuários.");
-    const email=document.getElementById("emailUser").value.trim();
-    const senha=document.getElementById("senhaUser").value.trim();
-    const role=document.getElementById("roleUser").value;
-    if(!email||!senha) return alert("Preencha email e senha!");
-    try{
-      const userCredential=await auth.createUserWithEmailAndPassword(email,senha);
-      await db.collection("usuarios").doc(userCredential.user.uid).set({email,role});
-      alert("Usuário criado com sucesso!");
-      document.getElementById("emailUser").value="";
-      document.getElementById("senhaUser").value="";
-    }catch(err){ alert("Erro: "+err.message); }
+// Abrir player
+function abrirPlayer(driveId){
+  const iframe = document.getElementById("playerFrame");
+  iframe.src = `https://drive.google.com/file/d/${driveId}/preview`;
+  document.getElementById("playerModal").style.display="flex";
+}
+
+// Fechar player
+function fecharPlayer(){
+  const iframe = document.getElementById("playerFrame");
+  iframe.src="";
+  document.getElementById("playerModal").style.display="none";
+}
+
+// Carregar filmes
+async function carregarFilmes(){
+  catalogoEl.innerHTML="";
+  const snapshot = await db.collection("filmes").get();
+  snapshot.forEach(doc=>{
+    const f = doc.data();
+    const card = document.createElement("div");
+    card.className="filme";
+    card.innerHTML = `
+      <img src="${f.capa}" alt="${f.titulo}">
+      <div class="filme-info">
+        <h4>${f.titulo}</h4>
+        ${currentUser.role==="admin"?`<button onclick="removerFilme('${doc.id}')">Remover</button>`:""}
+      </div>`;
+    card.onclick = ()=>abrirPlayer(f.driveId);
+    catalogoEl.appendChild(card);
+  });
+}
+
+// Adicionar filme
+async function adicionarFilme(){
+  const titulo = document.getElementById("titulo").value.trim();
+  const categoria = document.getElementById("categoria").value.trim() || "Outros";
+  const capa = document.getElementById("capa").value.trim();
+  const link = document.getElementById("linkDrive").value.trim();
+  if(!titulo || !capa || !link) return alert("Preencha todos os campos!");
+  const idMatch = link.match(/\/d\/(.*?)\//);
+  const driveId = idMatch ? idMatch[1] : link;
+  await db.collection("filmes").add({ titulo, categoria, capa, driveId });
+  carregarFilmes();
+  document.getElementById("titulo").value="";
+  document.getElementById("categoria").value="";
+  document.getElementById("capa").value="";
+  document.getElementById("linkDrive").value="";
+}
+
+// Remover filme
+async function removerFilme(id){
+  await db.collection("filmes").doc(id).delete();
+  carregarFilmes();
+}
+
+// Criar usuário
+async function criarUsuario(){
+  const email = document.getElementById("emailUser").value.trim();
+  const senha = document.getElementById("senhaUser").value.trim();
+  const role = document.getElementById("roleUser").value;
+  if(!email || !senha) return alert("Preencha todos os campos!");
+  try{
+    const userCredential = await auth.createUserWithEmailAndPassword(email, senha);
+    await db.collection("usuarios").doc(userCredential.user.uid).set({email, role});
+    alert("Usuário criado com sucesso!");
+    document.getElementById("emailUser").value="";
+    document.getElementById("senhaUser").value="";
+  }catch(err){
+    alert(err.message);
   }
-
-  const playerModal=document.getElementById("playerModal");
-  const playerFrame=document.getElementById("playerFrame");
-  function abrirPlayer(driveId){ playerFrame.src=`https://drive.google.com/file/d/${driveId}/preview`; playerModal.style.display="flex"; }
-  function fecharPlayer(){ playerFrame.src=""; playerModal.style.display="none"; }
+}
 </script>
 
 </body>
