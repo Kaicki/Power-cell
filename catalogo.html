@@ -7,21 +7,12 @@
 <style>
   * { margin:0; padding:0; box-sizing:border-box; font-family: Arial, sans-serif; }
   body { background:#000; color:#fff; }
-  header { background:#111; padding:20px; text-align:center; font-size:28px; font-weight:bold; display:flex; justify-content:space-between; align-items:center; }
-
-  .categoria { margin:20px 0; }
-  .categoria h3 { margin-left:20px; }
-  .lista-filmes { display:flex; overflow-x:auto; padding:10px 20px; gap:10px; scroll-behavior:smooth; }
+  header { background:#111; padding:20px; text-align:center; font-size:28px; font-weight:bold; }
+  .lista-filmes { display:flex; overflow-x:auto; padding:20px; gap:10px; scroll-behavior:smooth; }
   .filme { flex:0 0 auto; width:160px; cursor:pointer; position:relative; transition: transform .3s; }
   .filme img { width:100%; border-radius:8px; }
   .filme:hover { transform:scale(1.1); }
   .filme-info { text-align:center; margin-top:5px; }
-  .filme-info button { margin-top:5px; padding:4px 8px; font-size:12px; background:#ff3333; color:#fff; border:none; border-radius:4px; cursor:pointer; }
-
-  #adminPanel { background:#222; padding:20px; margin:20px auto; max-width:600px; border-radius:8px; display:none; }
-  #adminPanel input, #adminPanel select, #adminPanel button { width:100%; margin:5px 0; padding:8px; border-radius:4px; border:none; }
-  #adminPanel button { background:#28a745; color:#fff; font-weight:bold; cursor:pointer; }
-
   #playerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); justify-content:center; align-items:center; }
   #playerModal iframe { width:80%; height:80%; border:none; border-radius:8px; }
   #playerModal button { position:absolute; top:20px; right:20px; padding:8px 12px; font-size:16px; background:#ff3333; border:none; border-radius:4px; cursor:pointer; color:#fff; }
@@ -29,31 +20,9 @@
 </head>
 <body>
 
-<header>
-  CinePower
-  <button onclick="logout()" style="background:#555;color:#fff;padding:5px 10px;border:none;border-radius:4px;cursor:pointer;">Sair</button>
-</header>
+<header>CinePower</header>
 
-<!-- Admin Panel -->
-<div id="adminPanel">
-  <h3>Admin Panel - Filmes</h3>
-  <input type="text" id="titulo" placeholder="Título do filme">
-  <input type="text" id="categoria" placeholder="Categoria">
-  <input type="text" id="capa" placeholder="URL da capa">
-  <input type="text" id="linkDrive" placeholder="Link do Google Drive">
-  <button onclick="adicionarFilme()">Adicionar Filme</button>
-
-  <h3>Adicionar Usuário</h3>
-  <input type="email" id="emailUser" placeholder="Email">
-  <input type="password" id="senhaUser" placeholder="Senha">
-  <select id="roleUser">
-    <option value="user">Usuário</option>
-    <option value="admin">Admin</option>
-  </select>
-  <button onclick="criarUsuario()">Adicionar Usuário</button>
-</div>
-
-<div id="catalogo"></div>
+<div class="lista-filmes" id="catalogo"></div>
 
 <!-- Player Modal -->
 <div id="playerModal">
@@ -61,48 +30,15 @@
   <iframe id="playerFrame" src="" allowfullscreen></iframe>
 </div>
 
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js"></script>
-
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
 <script>
-const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
-  authDomain: "seu-projeto.firebaseapp.com",
-  projectId: "seu-projeto",
-  storageBucket: "seu-projeto.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef"
-};
-
-const app = firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
+// Configuração do Supabase
+const supabaseUrl = 'https://bbbhatsqjnrjfbhkwrcp.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiYmhhdHNxam5yamZiaGt3cmNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAxMTMxOTYsImV4cCI6MjA3NTY4OTE5Nn0.KxPfc0SLkALTFsayNWm3_zAUEdBQwMlNlHUYZlcU7FU';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 const catalogoEl = document.getElementById("catalogo");
-const adminPanel = document.getElementById("adminPanel");
-let currentUser = null;
-
-// Verifica login
-auth.onAuthStateChanged(async (user)=>{
-  if(user){
-    currentUser = user;
-    const doc = await db.collection("usuarios").doc(user.uid).get();
-    const role = doc.exists ? doc.data().role : "user";
-    currentUser.role = role;
-    if(role==="admin") adminPanel.style.display="block";
-    carregarFilmes();
-  } else {
-    window.location.href="index.html";
-  }
-});
-
-// Logout
-async function logout(){
-  await auth.signOut();
-  window.location.href="index.html";
-}
 
 // Abrir player
 function abrirPlayer(driveId){
@@ -118,64 +54,26 @@ function fecharPlayer(){
   document.getElementById("playerModal").style.display="none";
 }
 
-// Carregar filmes
+// Carregar filmes do Supabase
 async function carregarFilmes(){
   catalogoEl.innerHTML="";
-  const snapshot = await db.collection("filmes").get();
-  snapshot.forEach(doc=>{
-    const f = doc.data();
+  const { data: filmes, error } = await supabase.from('filmes').select('*');
+  if(error){ console.error(error); return; }
+  filmes.forEach(f=>{
     const card = document.createElement("div");
-    card.className="filme";
+    card.className = "filme";
     card.innerHTML = `
       <img src="${f.capa}" alt="${f.titulo}">
       <div class="filme-info">
         <h4>${f.titulo}</h4>
-        ${currentUser.role==="admin"?`<button onclick="removerFilme('${doc.id}')">Remover</button>`:""}
       </div>`;
     card.onclick = ()=>abrirPlayer(f.driveId);
     catalogoEl.appendChild(card);
   });
 }
 
-// Adicionar filme
-async function adicionarFilme(){
-  const titulo = document.getElementById("titulo").value.trim();
-  const categoria = document.getElementById("categoria").value.trim() || "Outros";
-  const capa = document.getElementById("capa").value.trim();
-  const link = document.getElementById("linkDrive").value.trim();
-  if(!titulo || !capa || !link) return alert("Preencha todos os campos!");
-  const idMatch = link.match(/\/d\/(.*?)\//);
-  const driveId = idMatch ? idMatch[1] : link;
-  await db.collection("filmes").add({ titulo, categoria, capa, driveId });
-  carregarFilmes();
-  document.getElementById("titulo").value="";
-  document.getElementById("categoria").value="";
-  document.getElementById("capa").value="";
-  document.getElementById("linkDrive").value="";
-}
-
-// Remover filme
-async function removerFilme(id){
-  await db.collection("filmes").doc(id).delete();
-  carregarFilmes();
-}
-
-// Criar usuário
-async function criarUsuario(){
-  const email = document.getElementById("emailUser").value.trim();
-  const senha = document.getElementById("senhaUser").value.trim();
-  const role = document.getElementById("roleUser").value;
-  if(!email || !senha) return alert("Preencha todos os campos!");
-  try{
-    const userCredential = await auth.createUserWithEmailAndPassword(email, senha);
-    await db.collection("usuarios").doc(userCredential.user.uid).set({email, role});
-    alert("Usuário criado com sucesso!");
-    document.getElementById("emailUser").value="";
-    document.getElementById("senhaUser").value="";
-  }catch(err){
-    alert(err.message);
-  }
-}
+// Inicializa
+carregarFilmes();
 </script>
 
 </body>
