@@ -6,7 +6,7 @@
 <title>CinePower - Login</title>
 <style>
   body { background:#111; color:#fff; font-family: Arial, sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; }
-  #loginPanel { background:#222; padding:30px; border-radius:12px; width:320px; box-shadow: 0 0 20px rgba(0,0,0,0.5); transition: max-height 0.4s ease; overflow:hidden; }
+  #loginPanel { background:#222; padding:30px; border-radius:12px; width:320px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
   h2 { text-align:center; margin-bottom:20px; }
   input, select, button { width:100%; margin:8px 0; padding:10px; border-radius:6px; border:none; }
   button { background:#28a745; color:#fff; font-weight:bold; cursor:pointer; }
@@ -48,6 +48,7 @@
 <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"></script>
 
 <script>
+  // CONFIGURAÇÃO FIREBASE
   const firebaseConfig = {
     apiKey: "SUA_API_KEY",
     authDomain: "seu-projeto.firebaseapp.com",
