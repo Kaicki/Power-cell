@@ -60,6 +60,13 @@
       border: none;
     }
 
+    .filme img {
+      width: 100%;
+      height: 320px;
+      object-fit: cover;
+      display: block;
+    }
+
     .filme-info {
       padding: 10px;
     }
@@ -79,7 +86,7 @@
       gap: 10px;
     }
 
-    #painelAdmin input, #painelAdmin textarea {
+    #painelAdmin input {
       width: 100%;
       padding: 8px;
       border: none;
@@ -110,7 +117,7 @@
   <div id="painelAdmin">
     <h3>Adicionar Filme</h3>
     <input type="text" id="titulo" placeholder="Título do Filme">
-    <textarea id="descricao" placeholder="Descrição"></textarea>
+    <input type="text" id="capa" placeholder="URL da Capa (imagem)">
     <input type="text" id="driveId" placeholder="ID do Google Drive">
     <button onclick="adicionarFilme()">Adicionar</button>
     <button onclick="limparCatalogo()">Limpar Catálogo</button>
@@ -143,10 +150,10 @@
         const card = document.createElement("div");
         card.className = "filme";
         card.innerHTML = `
+          <img src="${f.capa}" alt="Capa do Filme">
           <iframe src="https://drive.google.com/file/d/${f.driveId}/preview" allowfullscreen></iframe>
           <div class="filme-info">
             <h4>${f.titulo}</h4>
-            <p>${f.descricao}</p>
             ${user.isAdmin ? `<button onclick="removerFilme(${i})">Remover</button>` : ""}
           </div>`;
         catalogoEl.appendChild(card);
@@ -155,17 +162,19 @@
 
     function adicionarFilme() {
       const titulo = document.getElementById("titulo").value.trim();
-      const descricao = document.getElementById("descricao").value.trim();
+      const capa = document.getElementById("capa").value.trim();
       const driveId = document.getElementById("driveId").value.trim();
 
-      if (!titulo || !driveId) return alert("Preencha pelo menos o título e o ID do Drive!");
+      if (!titulo || !driveId || !capa)
+        return alert("Preencha o título, a capa e o ID do Drive!");
 
       const filmes = JSON.parse(localStorage.getItem("filmes")) || [];
-      filmes.push({ titulo, descricao, driveId });
+      filmes.push({ titulo, capa, driveId });
       localStorage.setItem("filmes", JSON.stringify(filmes));
       carregarFilmes();
+
       document.getElementById("titulo").value = "";
-      document.getElementById("descricao").value = "";
+      document.getElementById("capa").value = "";
       document.getElementById("driveId").value = "";
     }
 
