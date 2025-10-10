@@ -5,28 +5,41 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CinePower - Login</title>
 <style>
-  body { background:#000; color:#fff; font-family: Arial, sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; }
-  #loginPanel { background:#222; padding:30px; border-radius:8px; width:300px; }
-  input, select, button { width:100%; margin:5px 0; padding:8px; border-radius:4px; border:none; }
+  body { background:#111; color:#fff; font-family: Arial, sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; }
+  #loginPanel { background:#222; padding:30px; border-radius:12px; width:320px; box-shadow: 0 0 20px rgba(0,0,0,0.5); transition: max-height 0.4s ease; overflow:hidden; }
+  h2 { text-align:center; margin-bottom:20px; }
+  input, select, button { width:100%; margin:8px 0; padding:10px; border-radius:6px; border:none; }
   button { background:#28a745; color:#fff; font-weight:bold; cursor:pointer; }
+  .link { color:#0af; cursor:pointer; font-size:14px; text-align:center; margin-top:5px; }
+  .error { color:#ff5555; text-align:center; margin-top:10px; font-size:14px; }
 </style>
 </head>
 <body>
 
 <div id="loginPanel">
-  <h3>Login</h3>
-  <input type="email" id="emailLogin" placeholder="Email">
-  <input type="password" id="senhaLogin" placeholder="Senha">
-  <button onclick="login()">Entrar</button>
+  <h2>CinePower</h2>
 
-  <p style="margin-top:10px; font-size:14px;">Não tem conta? Cadastre abaixo</p>
-  <input type="email" id="emailSignup" placeholder="Email">
-  <input type="password" id="senhaSignup" placeholder="Senha">
-  <select id="roleSignup">
-    <option value="user">Usuário</option>
-    <option value="admin">Admin</option>
-  </select>
-  <button onclick="signup()">Cadastrar</button>
+  <!-- LOGIN -->
+  <div id="loginForm">
+    <input type="email" id="emailLogin" placeholder="Email">
+    <input type="password" id="senhaLogin" placeholder="Senha">
+    <button onclick="login()">Entrar</button>
+    <p class="link" onclick="toggleForm()">Registrar-se</p>
+  </div>
+
+  <!-- REGISTRO -->
+  <div id="signupForm" style="display:none;">
+    <input type="email" id="emailSignup" placeholder="Email">
+    <input type="password" id="senhaSignup" placeholder="Senha">
+    <select id="roleSignup">
+      <option value="user">Usuário</option>
+      <option value="admin">Admin</option>
+    </select>
+    <button onclick="signup()">Cadastrar</button>
+    <p class="link" onclick="toggleForm()">Voltar ao login</p>
+  </div>
+
+  <p class="error" id="msgErro"></p>
 </div>
 
 <!-- Firebase SDKs -->
@@ -48,28 +61,53 @@
   const auth = firebase.auth();
   const db = firebase.firestore();
 
-  async function signup() {
-    const email = document.getElementById("emailSignup").value.trim();
-    const senha = document.getElementById("senhaSignup").value.trim();
-    const role = document.getElementById("roleSignup").value;
-    if(!email || !senha) return alert("Preencha email e senha!");
-    try {
-      const userCredential = await auth.createUserWithEmailAndPassword(email, senha);
-      await db.collection("usuarios").doc(userCredential.user.uid).set({email, role});
-      alert("Cadastro realizado com sucesso!");
-      document.getElementById("emailSignup").value="";
-      document.getElementById("senhaSignup").value="";
-    } catch(err) { alert("Erro: "+err.message); }
+  const msgErro = document.getElementById("msgErro");
+  const loginForm = document.getElementById("loginForm");
+  const signupForm = document.getElementById("signupForm");
+
+  function toggleForm(){
+    if(loginForm.style.display === "none"){
+      loginForm.style.display = "block";
+      signupForm.style.display = "none";
+    } else {
+      loginForm.style.display = "none";
+      signupForm.style.display = "block";
+    }
+    msgErro.textContent = "";
   }
+
+  // Redirecionar se já logado
+  auth.onAuthStateChanged(user => {
+    if(user){
+      window.location.href = "catalogo.html";
+    }
+  });
 
   async function login() {
     const email = document.getElementById("emailLogin").value.trim();
     const senha = document.getElementById("senhaLogin").value.trim();
-    if(!email || !senha) return alert("Preencha email e senha!");
+    msgErro.textContent = "";
+    if(!email || !senha) return msgErro.textContent = "Preencha email e senha!";
     try {
       await auth.signInWithEmailAndPassword(email, senha);
-      window.location.href = "catalogo.html"; // redireciona para o catálogo
-    } catch(err) { alert("Erro: "+err.message); }
+      window.location.href = "catalogo.html";
+    } catch(err) { msgErro.textContent = err.message; }
+  }
+
+  async function signup() {
+    const email = document.getElementById("emailSignup").value.trim();
+    const senha = document.getElementById("senhaSignup").value.trim();
+    const role = document.getElementById("roleSignup").value;
+    msgErro.textContent = "";
+    if(!email || !senha) return msgErro.textContent = "Preencha email e senha!";
+    try {
+      const userCredential = await auth.createUserWithEmailAndPassword(email, senha);
+      await db.collection("usuarios").doc(userCredential.user.uid).set({email, role});
+      alert("Cadastro realizado com sucesso!");
+      toggleForm(); // volta ao login
+      document.getElementById("emailSignup").value="";
+      document.getElementById("senhaSignup").value="";
+    } catch(err) { msgErro.textContent = err.message; }
   }
 </script>
 
