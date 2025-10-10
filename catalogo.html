@@ -116,7 +116,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.9);
+      background: rgba(0,0,0,0.95);
       display: none;
       justify-content: center;
       align-items: center;
@@ -145,6 +145,19 @@
     #fecharModal:hover {
       background: #b00610;
     }
+
+    /* Marca d'água */
+    .marca-dagua {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      color: rgba(255, 255, 255, 0.15);
+      font-size: 14px;
+      z-index: 2000;
+      pointer-events: none;
+      user-select: none;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -152,6 +165,9 @@
     <span><strong>Powercine</strong> 🎬</span>
     <button id="logout">Sair</button>
   </header>
+
+  <!-- Marca d’água -->
+  <div class="marca-dagua">Powercine © <span id="marcaUser"></span></div>
 
   <div id="painelAdmin">
     <h3>Adicionar Filme</h3>
@@ -167,12 +183,23 @@
 
   <!-- Modal Player -->
   <div id="playerModal">
-    <iframe id="playerFrame" allowfullscreen></iframe>
+    <iframe id="playerFrame" sandbox="allow-scripts allow-same-origin allow-presentation" allowfullscreen></iframe>
     <button id="fecharModal">Fechar</button>
   </div>
 
   <script>
-    const user = JSON.parse(localStorage.getItem("user"));
+    // 🔒 Bloqueio de clique direito e atalhos
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      if (e.ctrlKey && ['u','U','s','S','c','C','i','I','p','P'].includes(e.key)) {
+        e.preventDefault();
+      }
+    });
+
+    // Marca d’água dinâmica
+    const user = JSON.parse(localStorage.getItem("user")) || { name: "Convidado" };
+    document.getElementById("marcaUser").innerText = `${user.name || 'Usuário'} — ${new Date().toLocaleString()}`;
+
     const catalogoEl = document.getElementById("catalogo");
     const painel = document.getElementById("painelAdmin");
     const modal = document.getElementById("playerModal");
@@ -200,7 +227,7 @@
         card.innerHTML = `
           <img src="${f.capa}" alt="Capa de ${f.titulo}">
           <h4>${f.titulo}</h4>
-          ${user.isAdmin ? `<button onclick="removerFilme(${i})" style="position:absolute;top:5px;right:5px;background:#e50914;border:none;color:white;padding:5px;border-radius:4px;cursor:pointer;">X</button>` : ""}
+          ${user.isAdmin ? `<button onclick="removerFilme(${i});event.stopPropagation();" style="position:absolute;top:5px;right:5px;background:#e50914;border:none;color:white;padding:5px;border-radius:4px;cursor:pointer;">X</button>` : ""}
         `;
         card.onclick = () => abrirFilme(f.driveId);
         catalogoEl.appendChild(card);
